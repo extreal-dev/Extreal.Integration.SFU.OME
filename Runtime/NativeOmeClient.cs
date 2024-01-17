@@ -20,8 +20,8 @@ namespace Extreal.Integration.SFU.OME
 
         private readonly List<Action<string, OmeRTCPeerConnection>> publishPcCreateHooks = new List<Action<string, OmeRTCPeerConnection>>();
         private readonly List<Action<string, OmeRTCPeerConnection>> subscribePcCreateHooks = new List<Action<string, OmeRTCPeerConnection>>();
-        private readonly List<Action<string, OmeRTCPeerConnection>> publishPcCloseHooks = new List<Action<string, OmeRTCPeerConnection>>();
-        private readonly List<Action<string, OmeRTCPeerConnection>> subscribePcCloseHooks = new List<Action<string, OmeRTCPeerConnection>>();
+        private readonly List<Action<string>> publishPcCloseHooks = new List<Action<string>>();
+        private readonly List<Action<string>> subscribePcCloseHooks = new List<Action<string>>();
 
         private CompositeDisposable websocketDisposables = new CompositeDisposable();
 
@@ -86,10 +86,10 @@ namespace Extreal.Integration.SFU.OME
         public void AddSubscribePcCreateHook(Action<string, OmeRTCPeerConnection> hook)
             => subscribePcCreateHooks.Add(hook);
 
-        public void AddPublishPcCloseHook(Action<string, OmeRTCPeerConnection> hook)
+        public void AddPublishPcCloseHook(Action<string> hook)
             => publishPcCloseHooks.Add(hook);
 
-        public void AddSubscribePcCloseHook(Action<string, OmeRTCPeerConnection> hook)
+        public void AddSubscribePcCloseHook(Action<string> hook)
             => subscribePcCloseHooks.Add(hook);
 
         protected override async UniTask DoConnectAsync(string roomName)

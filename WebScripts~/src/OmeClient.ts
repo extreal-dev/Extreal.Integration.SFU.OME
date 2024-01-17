@@ -1,4 +1,4 @@
-import { OmeWebSocket, PcHook } from "./OmeWebSocket";
+import { OmeWebSocket, PcCreateHook, PcCloseHook } from "./OmeWebSocket";
 import { v4 as uuidv4 } from "uuid";
 
 type OmeConfig = {
@@ -24,10 +24,10 @@ class OmeClient {
     private userName = uuidv4();
     public localStreamName = "";
 
-    private publishPcCreateHooks: PcHook[] = [];
-    private subscribePcCreateHooks: PcHook[] = [];
-    private publishPcCloseHooks: PcHook[] = [];
-    private subscribePcCloseHooks: PcHook[] = [];
+    private publishPcCreateHooks: PcCreateHook[] = [];
+    private subscribePcCreateHooks: PcCreateHook[] = [];
+    private publishPcCloseHooks: PcCloseHook[] = [];
+    private subscribePcCloseHooks: PcCloseHook[] = [];
 
     constructor(omeConfig: OmeConfig, callbacks: OmeClientCallbacks) {
         this.omeConfig = omeConfig;
@@ -83,19 +83,19 @@ class OmeClient {
         this.socket = null;
     };
 
-    public addPublishPcCreateHook = (hook: PcHook) => {
+    public addPublishPcCreateHook = (hook: PcCreateHook) => {
         this.publishPcCreateHooks.push(hook);
     };
 
-    public addSubscribePcCreateHook = (hook: PcHook) => {
+    public addSubscribePcCreateHook = (hook: PcCreateHook) => {
         this.subscribePcCreateHooks.push(hook);
     };
 
-    public addPublishPcCloseHook = (hook: PcHook) => {
+    public addPublishPcCloseHook = (hook: PcCloseHook) => {
         this.publishPcCloseHooks.push(hook);
     };
 
-    public addSubscribePcCloseHook = (hook: PcHook) => {
+    public addSubscribePcCloseHook = (hook: PcCloseHook) => {
         this.subscribePcCloseHooks.push(hook);
     };
 

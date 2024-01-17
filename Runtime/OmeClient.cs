@@ -85,14 +85,14 @@ namespace Extreal.Integration.SFU.OME
 
         protected abstract void DoReleaseManagedResources();
 
-        public async UniTask ConnectAsync(string roomName)
+        public UniTask ConnectAsync(string roomName)
         {
             if (Logger.IsDebug())
             {
                 Logger.LogDebug($"Connect: RoomName={roomName}, ServerUrl={serverUrl}");
             }
 
-            await DoConnectAsync(roomName);
+            return DoConnectAsync(roomName);
         }
 
         protected abstract UniTask DoConnectAsync(string roomName);

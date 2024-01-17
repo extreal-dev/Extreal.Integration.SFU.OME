@@ -45,10 +45,7 @@ namespace Extreal.Integration.SFU.OME
             await op;
             if (op.IsError)
             {
-                if (Logger.IsError())
-                {
-                    Logger.LogError($"CreateAnswer failure {op.Error.message}");
-                }
+                Logger.LogError($"CreateAnswer failure {op.Error.message}");
                 return;
             }
 

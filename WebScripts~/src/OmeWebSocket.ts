@@ -9,7 +9,8 @@ type OmeWebSocketCallbacks = {
     onUserLeft: (streamName: string) => void;
 };
 
-type PcHook = (streamName: string, pc: RTCPeerConnection) => void | Promise<void>;
+type PcCreateHook = (streamName: string, pc: RTCPeerConnection) => void | Promise<void>;
+type PcCloseHook = (streamName: string) => void | Promise<void>;
 
 class OmeWebSocket extends WebSocket {
     private defaultIceServers;
@@ -21,10 +22,10 @@ class OmeWebSocket extends WebSocket {
     private isConnected = false;
     private localStreamName = "";
 
-    private publishPcCreateHooks: PcHook[] = [];
-    private subscribePcCreateHooks: PcHook[] = [];
-    private publishPcCloseHooks: PcHook[] = [];
-    private subscribePcCloseHooks: PcHook[] = [];
+    private publishPcCreateHooks: PcCreateHook[] = [];
+    private subscribePcCreateHooks: PcCreateHook[] = [];
+    private publishPcCloseHooks: PcCloseHook[] = [];
+    private subscribePcCloseHooks: PcCloseHook[] = [];
 
     private publishConnection: OmeRTCPeerConnection | null = null;
     private subscribeConnections = new Map<string, OmeRTCPeerConnection>();
@@ -272,7 +273,12 @@ class OmeWebSocket extends WebSocket {
         return configuration;
     };
 
-    private handleHook = async (name: string, hook: PcHook, streamName: string, pc: OmeRTCPeerConnection) => {
+    private handleHook = async (
+        name: string,
+        hook: PcCreateHook | PcCloseHook,
+        streamName: string,
+        pc: OmeRTCPeerConnection,
+    ) => {
         try {
             if (isAsync(hook)) {
                 await hook(streamName, pc);
@@ -312,21 +318,21 @@ class OmeWebSocket extends WebSocket {
         this.callbacks.onUserLeft(command.getStreamName());
     };
 
-    public addPublishPcCreateHooks = (hooks: PcHook[]) => {
+    public addPublishPcCreateHooks = (hooks: PcCreateHook[]) => {
         this.publishPcCreateHooks.push(...hooks);
     };
 
-    public addSubscribePcCreateHooks = (hooks: PcHook[]) => {
+    public addSubscribePcCreateHooks = (hooks: PcCreateHook[]) => {
         this.subscribePcCreateHooks.push(...hooks);
     };
 
-    public addPublishPcCloseHooks = (hooks: PcHook[]) => {
+    public addPublishPcCloseHooks = (hooks: PcCloseHook[]) => {
         this.publishPcCloseHooks.push(...hooks);
     };
 
-    public addSubscribePcCloseHooks = (hooks: PcHook[]) => {
+    public addSubscribePcCloseHooks = (hooks: PcCloseHook[]) => {
         this.subscribePcCloseHooks.push(...hooks);
     };
 }
 
-export { OmeWebSocket, PcHook };
+export { OmeWebSocket, PcCreateHook, PcCloseHook };
