@@ -1,9 +1,9 @@
+#if !UNITY_WEBGL || UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Cysharp.Threading.Tasks;
-using Extreal.Core.Logging;
 using NativeWebSocket;
 using UniRx;
 using Unity.WebRTC;
@@ -17,7 +17,6 @@ namespace Extreal.Integration.SFU.OME
         private OmeWebSocket websocket;
         private readonly string serverUrl;
         private readonly List<RTCIceServer> defaultIceServers;
-        private string localStreamName;
 
         private readonly List<Action<string, OmeRTCPeerConnection>> publishPcCreateHooks = new List<Action<string, OmeRTCPeerConnection>>();
         private readonly List<Action<string, OmeRTCPeerConnection>> subscribePcCreateHooks = new List<Action<string, OmeRTCPeerConnection>>();
@@ -25,7 +24,6 @@ namespace Extreal.Integration.SFU.OME
         private readonly List<Action<string, OmeRTCPeerConnection>> subscribePcCloseHooks = new List<Action<string, OmeRTCPeerConnection>>();
 
         private CompositeDisposable websocketDisposables = new CompositeDisposable();
-        private static readonly ELogger Logger = LoggingManager.GetLogger(nameof(NativeOmeClient));
 
         public NativeOmeClient(OmeConfig omeConfig) : base(omeConfig)
         {
@@ -101,3 +99,4 @@ namespace Extreal.Integration.SFU.OME
             => StopSocketAsync();
     }
 }
+#endif
