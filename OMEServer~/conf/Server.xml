@@ -124,6 +124,11 @@
 			<Names>
 				<Name>*</Name>
 			</Names>
+			<TLS>
+				<CertPath>${env:OME_TLS_CERT_PATH:/opt/ovenmediaengine/bin/cert.pem}</CertPath>
+				<KeyPath>${env:OME_TLS_KEY_PATH:/opt/ovenmediaengine/bin/privkey.pem}</KeyPath>
+				<ChainCertPath>${env:OME_TLS_CHAIN_PATH:/opt/ovenmediaengine/bin/chain.pem}</ChainCertPath>
+			</TLS>
 		</Host>
 		<API>
 			<AccessToken>${env:OME_API_ACCESS_TOKEN:ome-access-token}</AccessToken>
@@ -155,6 +160,11 @@
 					-->
 					<Name>${env:OME_DEFAULT_VIRTUALHOST_NAME:*}</Name>
 				</Names>
+				<TLS>
+					<CertPath>${env:OME_TLS_CERT_PATH:/opt/ovenmediaengine/bin/cert.pem}</CertPath>
+					<KeyPath>${env:OME_TLS_KEY_PATH:/opt/ovenmediaengine/bin/privkey.pem}</KeyPath>
+					<ChainCertPath>${env:OME_TLS_CHAIN_PATH:/opt/ovenmediaengine/bin/chain.pem}</ChainCertPath>
+				</TLS>
 			</Host>
 
 			<!-- Refer https://airensoft.gitbook.io/ovenmediaengine/signedpolicy

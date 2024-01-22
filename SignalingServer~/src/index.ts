@@ -6,7 +6,8 @@ import fs from "fs";
 import bodyParser from "body-parser";
 import WebSocket, { WebSocketServer } from "ws";
 import OMEWebSocket, { OMECommand } from "./OMEWebSocket";
-import { v4 as uuidv4 } from "uuid";
+// import { v5 as uuidv5 } from "uuid";
+import { v4 as uuidv4 } from 'uuid';
 
 const app = express();
 app.use(cors());
@@ -27,8 +28,8 @@ if (process.env.USE_HTTPS === "true") {
 }
 const wss = new WebSocketServer({ server });
 
-const appSrvUrl = "wss://sfu.dev.comet.ninja:3334";
-// const appSrvUrl = "ws://localhost:3334";
+//const appSrvUrl = "wss://sfu.dev.comet.ninja:3334";
+const appSrvUrl = "ws://localhost:3333";
 
 // roomMembers: ルーム名(key)に所属しているメンバであるユーザ(streamName)の配列
 // key: roomName, value: streamName
@@ -41,12 +42,13 @@ const userSocketMap: Map<string, WebSocket> = new Map<string, WebSocket>();
 const streamMap: Map<string, string> = new Map<string, string>();
 
 wss.on("connection", (rootWs: WebSocket) => {
-    let roomName = "";
-    let streamName = "";
-    let userName = "";
+    let ws: OMEWebSocket | undefined = undefined;
+    let roomName: string = "";
+    let streamName: string = "";
+    let userName: string = "";
 
     // 他メンバのストリームを受信するためのWebSocket
-    const subscribeWebSockets = new Map<string, OMEWebSocket>();
+    const subscribeWebSockets: Map<string, OMEWebSocket> = new Map<string, OMEWebSocket>();
     console.log("connected");
 
     rootWs.on("message", (message) => {
@@ -70,10 +72,12 @@ wss.on("connection", (rootWs: WebSocket) => {
                     return;
                 }
                 userName = msg.userName;
+                // streamName = fromString(userName);
+                // streamName = uuidv5(userName, uuidv5.URL);
                 streamName = uuidv4();
                 roomName = msg.roomName;
                 console.log("publish: Room:%o, userName:%o, stream: %o", roomName, userName, streamName);
-                const publishWS = new OMEWebSocket(`${appSrvUrl}/app/${streamName}?direction=send`);
+                const publishWS = new OMEWebSocket(appSrvUrl + "/app/" + streamName + "?direction=send");
                 publishWS.onMessageCallback = (command: OMECommand) => {
                     command.command = "publishOffer";
                     command.streamName = streamName;
@@ -98,7 +102,7 @@ wss.on("connection", (rootWs: WebSocket) => {
                     return;
                 }
                 console.log("subscribe:%s", msg.streamName);
-                const subscribeWS = new OMEWebSocket(`${appSrvUrl}/app/${msg.streamName}`);
+                const subscribeWS = new OMEWebSocket(appSrvUrl + "/app/" + msg.streamName);
                 subscribeWS.onMessageCallback = (command: OMECommand) => {
                     console.log("subscribeWS onMessage[%s]: %s", command.id, command.command);
                     command.command = "subscribeOffer";
@@ -112,6 +116,7 @@ wss.on("connection", (rootWs: WebSocket) => {
                         rootWs.send(JSON.stringify(command));
                         return;
                     }
+                    // console.log("subscribeOffer:%o", command);
                     rootWs.send(JSON.stringify(command));
                     // ストリーム名とWebSocketのマップを保存
                     subscribeWebSockets.set(command.id as string, subscribeWS);
@@ -124,7 +129,7 @@ wss.on("connection", (rootWs: WebSocket) => {
                 };
                 break;
             }
-            case "join": {
+            case "join":
                 if (!roomName || !userName) {
                     console.error("roomName or userName is not found:%o", msg);
                     return;
@@ -150,12 +155,11 @@ wss.on("connection", (rootWs: WebSocket) => {
                     roomMembers.set(roomName, new Set<string>([streamName]));
                 }
                 break;
-            }
             case "leave": {
                 break;
             }
             case "answer":
-            case "candidate": {
+            case "candidate":
                 if (!msg.id) {
                     console.error("id is not found:%o", msg);
                     return;
@@ -168,11 +172,11 @@ wss.on("connection", (rootWs: WebSocket) => {
                 console.log("send message to subscribeWS[%s]:%o", msg.id, msg);
                 ws.send(message);
                 break;
-            }
             default:
                 console.error("unknown command:%o", cmd);
                 break;
         }
+        // publishWS.send(JSON.stringify(msg));
     });
 
     rootWs.on("close", () => {
@@ -189,7 +193,7 @@ wss.on("connection", (rootWs: WebSocket) => {
                             command: "leave",
                             streamName: streamName,
                             userName: streamMap.get(streamName),
-                        }),
+                        })
                     );
                 }
             });

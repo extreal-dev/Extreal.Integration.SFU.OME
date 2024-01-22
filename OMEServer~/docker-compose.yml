@@ -4,6 +4,7 @@ services:
   ome:
     image: airensoft/ovenmediaengine:0.15.3
     container_name: ome_server
+    network_mode: "host"
     ports:
       - ${OME_ORIGIN_PORT:-9000}:${OME_ORIGIN_PORT:-9000}
       - ${OME_RTMP_PROV_PORT:-1935}:${OME_RTMP_PROV_PORT:-1935}
@@ -39,9 +40,9 @@ services:
       - OME_DEFAULT_ORIGIN_SERVER_ADDR=${OME_DEFAULT_ORIGIN_SERVER_ADDR}
     volumes:
       - ${OME_SERVER_CONF}:/opt/ovenmediaengine/bin/origin_conf/Server.xml:ro
-      - ${SSL_SERVER_CERT}:${OME_TLS_CERT_PATH}:ro
-      - ${SSL_SERVER_KEY}:${OME_TLS_KEY_PATH}:ro
-      - ${SSL_SERVER_CHAIN}:${OME_TLS_CHAIN_PATH}:ro
+      #- ${SSL_SERVER_CERT}:${OME_TLS_CERT_PATH}:ro
+      #- ${SSL_SERVER_KEY}:${OME_TLS_KEY_PATH}:ro
+      #- ${SSL_SERVER_CHAIN}:${OME_TLS_CHAIN_PATH}:ro
     command: /opt/ovenmediaengine/bin/OvenMediaEngine -c origin_conf
     restart: always
     logging:
