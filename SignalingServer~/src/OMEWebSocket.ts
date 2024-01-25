@@ -6,9 +6,8 @@ export interface OMECommand {
     sdp?: RTCSessionDescriptionInit;
     candidates?: RTCIceCandidateInit[];
 
-    roomName?: string;
-    streamName?: string;
-    userName?: string;
+    groupName?: string;
+    clientId?: string;
 
     code?: number;
     error?: string;

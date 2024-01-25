@@ -127,13 +127,10 @@ namespace Extreal.Integration.SFU.OME
         public string Command => command;
         [SerializeField] private string command;
 
-        [SerializeField, SuppressMessage("Usage", "IDE0052")] private string roomName;
+        [SerializeField, SuppressMessage("Usage", "IDE0052")] private string groupName;
 
-        public string StreamName => streamName;
-        [SerializeField] private string streamName;
-
-        public string UserName => userName;
-        [SerializeField] private string userName;
+        public string ClientId => clientId;
+        [SerializeField] private string clientId;
 
         public string Error => error;
         [SerializeField] private string error;
@@ -213,27 +210,26 @@ namespace Extreal.Integration.SFU.OME
             return command.ToJsonBytes();
         }
 
-        public static byte[] CreatePublishRequest(string roomName, string userName)
+        public static byte[] CreatePublishRequest(string groupName)
         {
             const string commandName = "publish";
             var command = new OmeCommand
             {
                 command = commandName,
-                roomName = roomName,
-                userName = userName,
+                groupName = groupName,
             };
             command.Log(commandName);
 
             return command.ToJsonBytes();
         }
 
-        public static byte[] CreateSubscribeRequest(string streamName)
+        public static byte[] CreateSubscribeRequest(string clientId)
         {
             const string commandName = "subscribe";
             var command = new OmeCommand
             {
                 command = commandName,
-                streamName = streamName,
+                clientId = clientId,
             };
             command.Log(commandName);
 

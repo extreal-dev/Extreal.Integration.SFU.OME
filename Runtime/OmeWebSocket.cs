@@ -30,7 +30,7 @@ namespace Extreal.Integration.SFU.OME
         private string roomName;
         private readonly List<RTCIceServer> defaultIceServers;
         private readonly string userName;
-        private string localStreamName;
+        private string localClientId;
 
         private readonly List<Action<string, OmeRTCPeerConnection>> publishPcCreateHooks = new List<Action<string, OmeRTCPeerConnection>>();
         private readonly List<Action<string, OmeRTCPeerConnection>> subscribePcCreateHooks = new List<Action<string, OmeRTCPeerConnection>>();
@@ -100,10 +100,10 @@ namespace Extreal.Integration.SFU.OME
             }
 
             isConnected = true;
-            SendPublishRequest(roomName, userName);
+            SendPublishRequest(roomName);
         }
 
-        private void SendPublishRequest(string roomName, string userName)
+        private void SendPublishRequest(string roomName)
         {
             if (!isConnected)
             {
@@ -113,7 +113,7 @@ namespace Extreal.Integration.SFU.OME
                 }
                 return;
             }
-            Send(OmeCommand.CreatePublishRequest(roomName, userName));
+            Send(OmeCommand.CreatePublishRequest(roomName));
         }
 
         private void OnCloseEvent(WebSocketCloseCode closeCode)
@@ -147,11 +147,11 @@ namespace Extreal.Integration.SFU.OME
 
             if (publishConnection != null)
             {
-                publishPcCloseHooks.ForEach(hook => HandleHook(nameof(CloseAllRTCConnections), () => hook.Invoke(localStreamName)));
+                publishPcCloseHooks.ForEach(hook => HandleHook(nameof(CloseAllRTCConnections), () => hook.Invoke(localClientId)));
                 publishConnection.Close();
                 publishConnection.Dispose();
                 publishConnection = null;
-                localStreamName = null;
+                localClientId = null;
             }
 
             subscribeConnections.Keys.ToList().ForEach(CloseConnection);
@@ -160,14 +160,14 @@ namespace Extreal.Integration.SFU.OME
             onLeft.OnNext(reason);
         }
 
-        private void CloseConnection(string streamName)
+        private void CloseConnection(string clientId)
         {
-            if (subscribeConnections.TryGetValue(streamName, out var connection))
+            if (subscribeConnections.TryGetValue(clientId, out var connection))
             {
-                subscribePcCloseHooks.ForEach(hook => HandleHook(nameof(CloseConnection), () => hook.Invoke(streamName)));
+                subscribePcCloseHooks.ForEach(hook => HandleHook(nameof(CloseConnection), () => hook.Invoke(clientId)));
                 connection.Close();
                 connection.Dispose();
-                subscribeConnections.Remove(streamName);
+                subscribeConnections.Remove(clientId);
             }
         }
 
@@ -233,19 +233,19 @@ namespace Extreal.Integration.SFU.OME
                 }
 
                 await Send(OmeCommand.CreateJoinMessage(command.Id));
-                onJoined.OnNext(command.StreamName);
+                onJoined.OnNext(command.ClientId);
             }));
 
-            publishPcCreateHooks.ForEach(hook => HandleHook(nameof(ReceivePublishOffer), () => hook.Invoke(command.StreamName, pc)));
+            publishPcCreateHooks.ForEach(hook => HandleHook(nameof(ReceivePublishOffer), () => hook.Invoke(command.ClientId, pc)));
 
-            localStreamName = command.StreamName;
+            localClientId = command.ClientId;
             publishConnection = pc;
             pc.CreateAnswerSdpAsync(command.GetSdp()).Forget();
         }
 
         private void ReceiveSubscribeOffer(OmeCommand command)
         {
-            var currentRetryCount = subscribeRetryCounts.ContainsKey(command.StreamName) ? subscribeRetryCounts[command.StreamName] : 0;
+            var currentRetryCount = subscribeRetryCounts.ContainsKey(command.ClientId) ? subscribeRetryCounts[command.ClientId] : 0;
 
             if (!string.IsNullOrEmpty(command.Error))
             {
@@ -256,17 +256,17 @@ namespace Extreal.Integration.SFU.OME
                         UniTask.Void(async () =>
                         {
                             await UniTask.Delay(TimeSpan.FromSeconds(SubscribeRetryInterval));
-                            SendSubscribeRequest(command.StreamName);
-                            subscribeRetryCounts[command.StreamName] = currentRetryCount + 1;
+                            SendSubscribeRequest(command.ClientId);
+                            subscribeRetryCounts[command.ClientId] = currentRetryCount + 1;
                         });
                     }
                     else
                     {
                         if (Logger.IsError())
                         {
-                            Logger.LogError($"Maximum retryCount reached: {command.StreamName}");
+                            Logger.LogError($"Maximum retryCount reached: {command.ClientId}");
                         }
-                        subscribeRetryCounts.Remove(command.StreamName);
+                        subscribeRetryCounts.Remove(command.ClientId);
                     }
                 }
                 else
@@ -275,7 +275,7 @@ namespace Extreal.Integration.SFU.OME
                     {
                         Logger.LogError($"Subscribe error: {command.Error}");
                     }
-                    subscribeRetryCounts.Remove(command.StreamName);
+                    subscribeRetryCounts.Remove(command.ClientId);
                 }
                 return;
             }
@@ -292,7 +292,7 @@ namespace Extreal.Integration.SFU.OME
                     return;
                 }
             }
-            subscribeRetryCounts.Remove(command.StreamName);
+            subscribeRetryCounts.Remove(command.ClientId);
 
             var isSetLocalCandidate = false;
 
@@ -321,9 +321,9 @@ namespace Extreal.Integration.SFU.OME
                 await Send(msgBytes);
             }));
 
-            subscribePcCreateHooks.ForEach(hook => HandleHook(nameof(ReceiveSubscribeOffer), () => hook.Invoke(command.StreamName, pc)));
+            subscribePcCreateHooks.ForEach(hook => HandleHook(nameof(ReceiveSubscribeOffer), () => hook.Invoke(command.ClientId, pc)));
 
-            subscribeConnections[command.StreamName] = pc;
+            subscribeConnections[command.ClientId] = pc;
             pc.CreateAnswerSdpAsync(command.GetSdp()).Forget();
         }
 
@@ -352,7 +352,7 @@ namespace Extreal.Integration.SFU.OME
             }
         }
 
-        private void SendSubscribeRequest(string streamName)
+        private void SendSubscribeRequest(string clientId)
         {
             if (!isConnected)
             {
@@ -362,29 +362,29 @@ namespace Extreal.Integration.SFU.OME
                 }
                 return;
             }
-            Send(OmeCommand.CreateSubscribeRequest(streamName));
+            Send(OmeCommand.CreateSubscribeRequest(clientId));
         }
 
         private void ReceiveJoinMember(OmeCommand command)
         {
             if (Logger.IsDebug())
             {
-                Logger.LogDebug($"Join[{command.StreamName}]: {command.UserName}");
+                Logger.LogDebug($"Join: ClientId={command.ClientId}");
             }
 
-            SendSubscribeRequest(command.StreamName);
-            onUserJoined.OnNext(command.StreamName);
+            SendSubscribeRequest(command.ClientId);
+            onUserJoined.OnNext(command.ClientId);
         }
 
         private void ReceiveLeaveMember(OmeCommand command)
         {
             if (Logger.IsDebug())
             {
-                Logger.LogDebug($"Leave[{command.StreamName}]: {command.UserName}");
+                Logger.LogDebug($"Leave: ClientId={command.ClientId}");
             }
 
-            CloseConnection(command.StreamName);
-            onUserLeft.OnNext(command.StreamName);
+            CloseConnection(command.ClientId);
+            onUserLeft.OnNext(command.ClientId);
         }
 
         public void AddPublishPcCreateHook(List<Action<string, OmeRTCPeerConnection>> hooks)

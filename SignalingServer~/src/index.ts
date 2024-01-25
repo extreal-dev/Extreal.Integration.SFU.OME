@@ -6,8 +6,7 @@ import fs from "fs";
 import bodyParser from "body-parser";
 import WebSocket, { WebSocketServer } from "ws";
 import OMEWebSocket, { OMECommand } from "./OMEWebSocket";
-// import { v5 as uuidv5 } from "uuid";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
 const app = express();
 app.use(cors());
@@ -15,9 +14,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 let server;
-// HTTPSを使用するかどうかを環境変数で判定
 if (process.env.USE_HTTPS === "true") {
-    // SSL証明書と秘密鍵を読み込む
     const privateKey = fs.readFileSync("./keys/privkey.pem", "utf8");
     const certificate = fs.readFileSync("./keys/fullchain.pem", "utf8");
 
@@ -28,187 +25,130 @@ if (process.env.USE_HTTPS === "true") {
 }
 const wss = new WebSocketServer({ server });
 
-//const appSrvUrl = "wss://sfu.dev.comet.ninja:3334";
-const appSrvUrl = "ws://localhost:3333";
+const omeServerUrl = process.env.OME_SERVER_URL || "ws://localhost:3333";
 
-// roomMembers: ルーム名(key)に所属しているメンバであるユーザ(streamName)の配列
-// key: roomName, value: streamName
-const roomMembers: Map<string, Set<string>> = new Map<string, Set<string>>();
-// userSocketMap: ユーザリスト．各ユーザが接続しているWebSocketの辞書
-// key: streamName, value: WebSocket
-const userSocketMap: Map<string, WebSocket> = new Map<string, WebSocket>();
-// streamMap: ユーザ名とストリーム名のマップ
-// key: streamName, value: userName
-const streamMap: Map<string, string> = new Map<string, string>();
+const groupMembers = new Map<string, Set<string>>();
+const clientWebSockets = new Map<string, WebSocket>();
 
-wss.on("connection", (rootWs: WebSocket) => {
-    let ws: OMEWebSocket | undefined = undefined;
-    let roomName: string = "";
-    let streamName: string = "";
-    let userName: string = "";
+wss.on("connection", (clientWebSocket: WebSocket) => {
+    let groupName = "";
+    let clientId = "";
 
-    // 他メンバのストリームを受信するためのWebSocket
-    const subscribeWebSockets: Map<string, OMEWebSocket> = new Map<string, OMEWebSocket>();
+    const omeWebSockets = new Map<string, OMEWebSocket>();
     console.log("connected");
 
-    rootWs.on("message", (message) => {
-        let msg: OMECommand;
-        try {
-            msg = JSON.parse(message.toString());
-        } catch (e) {
-            console.log("JSON parse error: %o", e);
-            return;
-        }
-        console.log("rootWS onMessage: %o", msg);
-        if (!msg.command) {
-            console.error("command is not found:%o", msg);
-            return;
-        }
-        const cmd = msg.command;
-        switch (cmd) {
+    clientWebSocket.on("message", (message) => {
+        const omeCommand: OMECommand = JSON.parse(message.toString());
+        console.log("clientWebSocket onMessage: %o", omeCommand);
+        switch (omeCommand.command) {
             case "publish": {
-                if (!msg.roomName || !msg.userName) {
-                    console.error("roomName or userName is not found:%o", msg);
-                    return;
-                }
-                userName = msg.userName;
-                // streamName = fromString(userName);
-                // streamName = uuidv5(userName, uuidv5.URL);
-                streamName = uuidv4();
-                roomName = msg.roomName;
-                console.log("publish: Room:%o, userName:%o, stream: %o", roomName, userName, streamName);
-                const publishWS = new OMEWebSocket(appSrvUrl + "/app/" + streamName + "?direction=send");
-                publishWS.onMessageCallback = (command: OMECommand) => {
+                clientId = uuidv4();
+                groupName = omeCommand.groupName as string;
+                console.log("publish: Group:%o, stream: %o", groupName, clientId);
+                const publishWebSocket = new OMEWebSocket(`${omeServerUrl}/app/${clientId}?direction=send`);
+                publishWebSocket.onMessageCallback = (command: OMECommand) => {
                     command.command = "publishOffer";
-                    command.streamName = streamName;
-                    command.userName = userName;
-                    rootWs.send(JSON.stringify(command));
+                    command.clientId = clientId;
+                    clientWebSocket.send(JSON.stringify(command));
 
-                    // ユーザのWebSocketを保存
-                    userSocketMap.set(streamName, rootWs);
-                    // IDとストリーム名のマップを保存
-                    streamMap.set(streamName, userName);
-                    // ストリーム名とWebSocketのマップを保存
-                    subscribeWebSockets.set(command.id as string, publishWS);
+                    clientWebSockets.set(clientId, clientWebSocket);
+                    omeWebSockets.set(command.id as string, publishWebSocket);
                 };
-                publishWS.onopen = () => {
-                    publishWS.send(JSON.stringify({ command: "request_offer" }));
+                publishWebSocket.onopen = () => {
+                    publishWebSocket.send(JSON.stringify({ command: "request_offer" }));
                 };
                 break;
             }
             case "subscribe": {
-                if (!msg.streamName) {
-                    console.error("streamName is not found:%o", msg);
-                    return;
-                }
-                console.log("subscribe:%s", msg.streamName);
-                const subscribeWS = new OMEWebSocket(appSrvUrl + "/app/" + msg.streamName);
-                subscribeWS.onMessageCallback = (command: OMECommand) => {
-                    console.log("subscribeWS onMessage[%s]: %s", command.id, command.command);
+                console.log("subscribe:%s", omeCommand.clientId);
+                const subscribeWebSocket = new OMEWebSocket(`${omeServerUrl}/app/${omeCommand.clientId}`);
+                subscribeWebSocket.onMessageCallback = (command: OMECommand) => {
+                    console.log("subscribeWebSocket onMessage[%s]: %s", command.id, command.command);
                     command.command = "subscribeOffer";
-                    command.streamName = msg.streamName;
-                    if (msg.streamName) {
-                        command.userName = streamMap.get(msg.streamName) as string;
-                    }
+                    command.clientId = omeCommand.clientId;
 
                     if (command.code && command.code === 404 && command.error === "Cannot create offer") {
-                        subscribeWS.close();
-                        rootWs.send(JSON.stringify(command));
+                        subscribeWebSocket.close();
+                        clientWebSocket.send(JSON.stringify(command));
                         return;
                     }
-                    // console.log("subscribeOffer:%o", command);
-                    rootWs.send(JSON.stringify(command));
-                    // ストリーム名とWebSocketのマップを保存
-                    subscribeWebSockets.set(command.id as string, subscribeWS);
+                    clientWebSocket.send(JSON.stringify(command));
+                    omeWebSockets.set(command.id as string, subscribeWebSocket);
                 };
-                subscribeWS.onopen = () => {
-                    subscribeWS.send(JSON.stringify({ command: "request_offer" }));
+                subscribeWebSocket.onopen = () => {
+                    subscribeWebSocket.send(JSON.stringify({ command: "request_offer" }));
                 };
-                subscribeWS.onclose = () => {
-                    console.log("subscribeWS[%s] closed", msg.streamName);
+                subscribeWebSocket.onclose = () => {
+                    console.log("subscribeWebSocket[%s] closed", omeCommand.clientId);
                 };
                 break;
             }
-            case "join":
-                if (!roomName || !userName) {
-                    console.error("roomName or userName is not found:%o", msg);
-                    return;
-                }
-                // ルームに既に入室しているメンバに対して、新規メンバの入室を通知
-                const members = roomMembers.get(roomName);
+            case "join": {
+                const members = groupMembers.get(groupName);
                 if (members) {
                     members.forEach((member) => {
-                        const userWs = userSocketMap.get(member);
-                        if (userWs) {
-                            userWs.send(JSON.stringify({ command: "join", streamName: streamName }));
+                        const memberClientWebSocket = clientWebSockets.get(member);
+                        if (memberClientWebSocket) {
+                            memberClientWebSocket.send(JSON.stringify({ command: "join", clientId: clientId }));
                         }
-                        // 自分に対して，既存メンバの情報を通知
-                        rootWs.send(JSON.stringify({ command: "join", streamName: member }));
+                        clientWebSocket.send(JSON.stringify({ command: "join", clientId: member }));
                     });
                 }
-                // ルームに加入
-                const roomSet = roomMembers.get(roomName);
+                const roomSet = groupMembers.get(groupName);
                 if (roomSet) {
-                    roomSet.add(streamName);
+                    roomSet.add(clientId);
                 } else {
-                    // 新規のルームであれば新規作成
-                    roomMembers.set(roomName, new Set<string>([streamName]));
+                    groupMembers.set(groupName, new Set<string>([clientId]));
                 }
-                break;
-            case "leave": {
                 break;
             }
             case "answer":
-            case "candidate":
-                if (!msg.id) {
-                    console.error("id is not found:%o", msg);
+            case "candidate": {
+                if (!omeCommand.id) {
+                    console.error("id is not found:%o", omeCommand);
                     return;
                 }
-                const ws = subscribeWebSockets.get(msg.id);
-                if (!ws) {
-                    console.error("websocket is not found:%o", msg);
+                const omeWebSocket = omeWebSockets.get(omeCommand.id);
+                if (!omeWebSocket) {
+                    console.error("websocket is not found:%o", omeCommand);
                     return;
                 }
-                console.log("send message to subscribeWS[%s]:%o", msg.id, msg);
-                ws.send(message);
+                console.log("send message to clientWebSockets[%s]:%o", omeCommand.id, omeCommand);
+                omeWebSocket.send(message);
                 break;
+            }
             default:
-                console.error("unknown command:%o", cmd);
+                console.error("unknown command:%o", omeCommand.command);
                 break;
         }
-        // publishWS.send(JSON.stringify(msg));
     });
 
-    rootWs.on("close", () => {
-        const members = roomMembers.get(roomName);
+    clientWebSocket.on("close", () => {
+        if (!groupName) {
+            return;
+        }
+
+        const members = groupMembers.get(groupName);
         if (members) {
-            // ルームメンバから自分を削除
-            members.delete(streamName);
-            // ルームメンバに退出を通知
+            members.delete(clientId);
             members.forEach((member) => {
-                const userWs = userSocketMap.get(member);
-                if (userWs) {
-                    userWs.send(
+                const memberClientWebSocket = clientWebSockets.get(member);
+                if (memberClientWebSocket) {
+                    memberClientWebSocket.send(
                         JSON.stringify({
                             command: "leave",
-                            streamName: streamName,
-                            userName: streamMap.get(streamName),
-                        })
+                            clientId: clientId,
+                        }),
                     );
                 }
             });
-            // セットが空になった場合、ルーム名も削除
             if (members.size === 0) {
-                roomMembers.delete(roomName);
+                groupMembers.delete(groupName);
             }
         }
-        // ユーザリストの辞書から削除
-        userSocketMap.delete(streamName);
-        // ユーザ名を辞書から削除
-        streamMap.delete(streamName);
-        // 残りの自分が送受信しているWebSocketを全て閉じる
-        subscribeWebSockets.forEach((ws) => {
-            ws.close();
+        clientWebSockets.delete(clientId);
+        omeWebSockets.forEach((omeWebSocket) => {
+            omeWebSocket.close();
         });
         console.log("closed");
     });

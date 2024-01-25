@@ -11,15 +11,15 @@ namespace Extreal.Integration.SFU.OME
     {
         public IObservable<string> OnJoined => onJoined;
         private readonly Subject<string> onJoined;
-        protected void FireOnJoined(string streamName) => UniTask.Void(async () =>
+        protected void FireOnJoined(string clientId) => UniTask.Void(async () =>
         {
             await UniTask.SwitchToMainThread();
 
             if (Logger.IsDebug())
             {
-                Logger.LogDebug($"{nameof(FireOnJoined)}: streamName={streamName}");
+                Logger.LogDebug($"{nameof(FireOnJoined)}: clientId={clientId}");
             }
-            onJoined.OnNext(streamName);
+            onJoined.OnNext(clientId);
         });
 
         public IObservable<string> OnLeft => onLeft;
@@ -37,28 +37,28 @@ namespace Extreal.Integration.SFU.OME
 
         public IObservable<string> OnUserJoined => onUserJoined;
         private readonly Subject<string> onUserJoined;
-        protected void FireOnUserJoined(string streamName) => UniTask.Void(async () =>
+        protected void FireOnUserJoined(string clientId) => UniTask.Void(async () =>
         {
             await UniTask.SwitchToMainThread();
 
             if (Logger.IsDebug())
             {
-                Logger.LogDebug($"{nameof(FireOnUserJoined)}: streamName={streamName}");
+                Logger.LogDebug($"{nameof(FireOnUserJoined)}: clientId={clientId}");
             }
-            onUserJoined.OnNext(streamName);
+            onUserJoined.OnNext(clientId);
         });
 
         public IObservable<string> OnUserLeft => onUserLeft;
         private readonly Subject<string> onUserLeft;
-        protected void FireOnUserLeft(string streamName) => UniTask.Void(async () =>
+        protected void FireOnUserLeft(string clientId) => UniTask.Void(async () =>
         {
             await UniTask.SwitchToMainThread();
 
             if (Logger.IsDebug())
             {
-                Logger.LogDebug($"{nameof(FireOnUserLeft)}: streamName={streamName}");
+                Logger.LogDebug($"{nameof(FireOnUserLeft)}: clientId={clientId}");
             }
-            onUserLeft.OnNext(streamName);
+            onUserLeft.OnNext(clientId);
         });
 
         private readonly string serverUrl;
