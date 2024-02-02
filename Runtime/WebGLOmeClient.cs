@@ -1,3 +1,4 @@
+#if UNITY_WEBGL
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -112,3 +113,4 @@ namespace Extreal.Integration.SFU.OME
         }
     }
 }
+#endif
