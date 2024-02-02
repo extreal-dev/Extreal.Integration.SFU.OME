@@ -12,8 +12,6 @@ namespace Extreal.Integration.SFU.OME
 {
     public class NativeOmeClient : OmeClient
     {
-        private readonly string userName = Guid.NewGuid().ToString();
-
         private OmeWebSocket websocket;
         private readonly string serverUrl;
         private readonly List<RTCIceServer> defaultIceServers;
@@ -52,10 +50,11 @@ namespace Extreal.Integration.SFU.OME
                 await StopSocketAsync();
             }
 
-            websocket = new OmeWebSocket(serverUrl, defaultIceServers, userName).AddTo(websocketDisposables);
+            websocket = new OmeWebSocket(serverUrl, defaultIceServers).AddTo(websocketDisposables);
 
             websocket.OnJoined.Subscribe(FireOnJoined).AddTo(websocketDisposables);
-            websocket.OnLeft.Subscribe(FireOnLeft).AddTo(websocketDisposables);
+            websocket.OnLeft.Subscribe(_ => FireOnLeft()).AddTo(websocketDisposables);
+            websocket.OnUnexpectedLeft.Subscribe(FireOnUnexpectedLeft).AddTo(websocketDisposables);
             websocket.OnUserJoined.Subscribe(FireOnUserJoined).AddTo(websocketDisposables);
             websocket.OnUserLeft.Subscribe(FireOnUserLeft).AddTo(websocketDisposables);
 
@@ -63,6 +62,15 @@ namespace Extreal.Integration.SFU.OME
             websocket.AddSubscribePcCreateHook(subscribePcCreateHooks);
             websocket.AddPublishPcCloseHook(publishPcCloseHooks);
             websocket.AddSubscribePcCloseHook(subscribePcCloseHooks);
+
+            UniTask.Void(async () => await websocket.Connect());
+
+            await UniTask.WaitUntil(() => websocket.State is WebSocketState.Open or WebSocketState.Closed);
+
+            if (websocket.State == WebSocketState.Closed)
+            {
+                throw new WebSocketException("Connection failed");
+            }
 
             return websocket;
         }
@@ -92,8 +100,11 @@ namespace Extreal.Integration.SFU.OME
         public void AddSubscribePcCloseHook(Action<string> hook)
             => subscribePcCloseHooks.Add(hook);
 
+        protected override async UniTask<GroupListResponse> DoListGroupsAsync()
+            => await (await GetSocketAsync()).ListGroupsAsync();
+
         protected override async UniTask DoConnectAsync(string roomName)
-            => await (await GetSocketAsync()).ConnectAsync(roomName);
+            => (await GetSocketAsync()).Connect(roomName);
 
         public override UniTask DisconnectAsync()
             => StopSocketAsync();

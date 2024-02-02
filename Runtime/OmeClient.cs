@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Cysharp.Threading.Tasks;
 using Extreal.Core.Common.System;
 using Extreal.Core.Logging;
@@ -22,17 +24,30 @@ namespace Extreal.Integration.SFU.OME
             onJoined.OnNext(clientId);
         });
 
-        public IObservable<string> OnLeft => onLeft;
-        private readonly Subject<string> onLeft;
-        protected void FireOnLeft(string reason) => UniTask.Void(async () =>
+        public IObservable<Unit> OnLeft => onLeft;
+        private readonly Subject<Unit> onLeft;
+        protected void FireOnLeft() => UniTask.Void(async () =>
         {
             await UniTask.SwitchToMainThread();
 
             if (Logger.IsDebug())
             {
-                Logger.LogDebug($"{nameof(FireOnLeft)}: reason={reason}");
+                Logger.LogDebug($"{nameof(FireOnLeft)}");
             }
-            onLeft.OnNext(reason);
+            onLeft.OnNext(Unit.Default);
+        });
+
+        public IObservable<string> OnUnexpectedLeft => onUnexpectedLeft;
+        private readonly Subject<string> onUnexpectedLeft;
+        protected void FireOnUnexpectedLeft(string reason) => UniTask.Void(async () =>
+        {
+            await UniTask.SwitchToMainThread();
+
+            if (Logger.IsDebug())
+            {
+                Logger.LogDebug($"{nameof(FireOnUnexpectedLeft)}: reason={reason}");
+            }
+            onUnexpectedLeft.OnNext(reason);
         });
 
         public IObservable<string> OnUserJoined => onUserJoined;
@@ -72,7 +87,8 @@ namespace Extreal.Integration.SFU.OME
             serverUrl = omeConfig.ServerUrl;
 
             onJoined = new Subject<string>().AddTo(disposables);
-            onLeft = new Subject<string>().AddTo(disposables);
+            onLeft = new Subject<Unit>().AddTo(disposables);
+            onUnexpectedLeft = new Subject<string>().AddTo(disposables);
             onUserJoined = new Subject<string>().AddTo(disposables);
             onUserLeft = new Subject<string>().AddTo(disposables);
         }
@@ -84,6 +100,14 @@ namespace Extreal.Integration.SFU.OME
         }
 
         protected abstract void DoReleaseManagedResources();
+
+        public async UniTask<List<Group>> ListGroupsAsync()
+        {
+            var groupList = await DoListGroupsAsync();
+            return groupList.Groups.Select(groupResponse => new Group(groupResponse.Id, groupResponse.Name)).ToList();
+        }
+
+        protected abstract UniTask<GroupListResponse> DoListGroupsAsync();
 
         public UniTask ConnectAsync(string roomName)
         {

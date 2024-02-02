@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Threading;
 using AOT;
 using Cysharp.Threading.Tasks;
 using Extreal.Integration.Web.Common;
@@ -11,6 +12,9 @@ namespace Extreal.Integration.SFU.OME
     public class WebGLOmeClient : OmeClient
     {
         private static WebGLOmeClient instance;
+        private GroupListResponse groupList;
+
+        private readonly CancellationTokenSource cancellation = new CancellationTokenSource();
 
         public WebGLOmeClient(WebGLOmeConfig omeConfig) : base(omeConfig)
         {
@@ -18,15 +22,20 @@ namespace Extreal.Integration.SFU.OME
             WebGLHelper.CallAction(WithPrefix(nameof(WebGLOmeClient)), JsonOmeConfig.ToJson(omeConfig));
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnJoined)), HandleOnJoined);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnLeft)), HandleOnLeft);
+            WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUnexpectedLeft)), HandleOnUnexpectedLeft);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUserJoined)), HandleOnUserJoined);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUserLeft)), HandleOnUserLeft);
+            WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveListHostsResponse)), ReceiveListHostsResponse);
         }
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void HandleOnJoined(string streamName, string unused) => instance.FireOnJoined(streamName);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void HandleOnLeft(string reason, string unused) => instance.FireOnLeft(reason);
+        private static void HandleOnLeft(string unused1, string unused2) => instance.FireOnLeft();
+
+        [MonoPInvokeCallback(typeof(Action<string, string>))]
+        private static void HandleOnUnexpectedLeft(string reason, string unused) => instance.FireOnUnexpectedLeft(reason);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void HandleOnUserJoined(string streamName, string unused) => instance.FireOnUserJoined(streamName);
@@ -34,8 +43,25 @@ namespace Extreal.Integration.SFU.OME
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void HandleOnUserLeft(string streamName, string unused) => instance.FireOnUserLeft(streamName);
 
+        [MonoPInvokeCallback(typeof(Action<string, string>))]
+        private static void ReceiveListHostsResponse(string jsonResponse, string unused)
+            => instance.groupList = JsonUtility.FromJson<GroupListResponse>(jsonResponse);
+
         protected override void DoReleaseManagedResources()
-            => WebGLHelper.CallAction(WithPrefix(nameof(DoReleaseManagedResources)));
+        {
+            cancellation.Cancel();
+            cancellation.Dispose();
+            WebGLHelper.CallAction(WithPrefix(nameof(DoReleaseManagedResources)));
+        }
+
+        protected override async UniTask<GroupListResponse> DoListGroupsAsync()
+        {
+            WebGLHelper.CallAction(WithPrefix(nameof(DoListGroupsAsync)));
+            await UniTask.WaitUntil(() => groupList != null, cancellationToken: cancellation.Token);
+            var result = groupList;
+            groupList = null;
+            return result;
+        }
 
 #pragma warning disable CS1998
         protected override async UniTask DoConnectAsync(string roomName)

@@ -5,8 +5,15 @@ import https from "https";
 import fs from "fs";
 import bodyParser from "body-parser";
 import WebSocket, { WebSocketServer } from "ws";
-import OMEWebSocket, { OMECommand } from "./OMEWebSocket";
+import { OmeWebSocket, OmeMessage } from "./OMEWebSocket";
 import { v4 as uuidv4 } from "uuid";
+
+const isLogging = process.env.LOGGING === "on";
+const log = (message: string) => {
+    if (isLogging) {
+        console.log(message);
+    }
+};
 
 const app = express();
 app.use(cors());
@@ -33,26 +40,35 @@ const clientWebSockets = new Map<string, WebSocket>();
 wss.on("connection", (clientWebSocket: WebSocket) => {
     let groupName = "";
     let clientId = "";
+    const omeWebSockets = new Map<string, OmeWebSocket>();
 
-    const omeWebSockets = new Map<string, OMEWebSocket>();
-    console.log("connected");
+    log("connected to client");
 
     clientWebSocket.on("message", (message) => {
-        const omeCommand: OMECommand = JSON.parse(message.toString());
-        console.log("clientWebSocket onMessage: %o", omeCommand);
-        switch (omeCommand.command) {
+        const omeMessageFromClient: OmeMessage = JSON.parse(message.toString());
+        log(`received message from client: ${JSON.stringify(omeMessageFromClient)}`);
+        switch (omeMessageFromClient.command) {
+            case "list groups": {
+                log(`groupMembers: ${JSON.stringify(Object.fromEntries(groupMembers))}`);
+                omeMessageFromClient.groupListResponse = {
+                    groups: [...groupMembers].map((entry) => ({ name: entry[0], id: [...entry[1]][0] })),
+                };
+                log(`list groups: ${JSON.stringify(omeMessageFromClient.groupListResponse)}`);
+                clientWebSocket.send(JSON.stringify(omeMessageFromClient));
+                break;
+            }
             case "publish": {
                 clientId = uuidv4();
-                groupName = omeCommand.groupName as string;
-                console.log("publish: Group:%o, stream: %o", groupName, clientId);
-                const publishWebSocket = new OMEWebSocket(`${omeServerUrl}/app/${clientId}?direction=send`);
-                publishWebSocket.onMessageCallback = (command: OMECommand) => {
-                    command.command = "publishOffer";
-                    command.clientId = clientId;
-                    clientWebSocket.send(JSON.stringify(command));
+                groupName = omeMessageFromClient.groupName as string;
+                log(`publish: groupName=${groupName}, clientId: ${clientId}`);
+                const publishWebSocket = new OmeWebSocket(`${omeServerUrl}/app/${clientId}?direction=send`, isLogging);
+                publishWebSocket.onMessageCallback = (omeMessageFromOme: OmeMessage) => {
+                    omeMessageFromOme.command = "publish offer";
+                    omeMessageFromOme.clientId = clientId;
+                    clientWebSocket.send(JSON.stringify(omeMessageFromOme));
 
                     clientWebSockets.set(clientId, clientWebSocket);
-                    omeWebSockets.set(command.id as string, publishWebSocket);
+                    omeWebSockets.set(omeMessageFromOme.id as string, publishWebSocket);
                 };
                 publishWebSocket.onopen = () => {
                     publishWebSocket.send(JSON.stringify({ command: "request_offer" }));
@@ -60,26 +76,32 @@ wss.on("connection", (clientWebSocket: WebSocket) => {
                 break;
             }
             case "subscribe": {
-                console.log("subscribe:%s", omeCommand.clientId);
-                const subscribeWebSocket = new OMEWebSocket(`${omeServerUrl}/app/${omeCommand.clientId}`);
-                subscribeWebSocket.onMessageCallback = (command: OMECommand) => {
-                    console.log("subscribeWebSocket onMessage[%s]: %s", command.id, command.command);
-                    command.command = "subscribeOffer";
-                    command.clientId = omeCommand.clientId;
+                log(`subscribe: clientId=${omeMessageFromClient.clientId}`);
+                const subscribeWebSocket = new OmeWebSocket(
+                    `${omeServerUrl}/app/${omeMessageFromClient.clientId}`,
+                    isLogging,
+                );
+                subscribeWebSocket.onMessageCallback = (omeMessageFromOme: OmeMessage) => {
+                    log(
+                        `received message from OME server: id=${omeMessageFromOme.id}, clientId=${omeMessageFromOme.command}`,
+                    );
+                    omeMessageFromOme.command = "subscribe offer";
+                    omeMessageFromOme.clientId = omeMessageFromClient.clientId;
 
-                    if (command.code && command.code === 404 && command.error === "Cannot create offer") {
+                    if (
+                        omeMessageFromOme.code &&
+                        omeMessageFromOme.code === 404 &&
+                        omeMessageFromOme.error === "Cannot create offer"
+                    ) {
                         subscribeWebSocket.close();
-                        clientWebSocket.send(JSON.stringify(command));
+                        clientWebSocket.send(JSON.stringify(omeMessageFromOme));
                         return;
                     }
-                    clientWebSocket.send(JSON.stringify(command));
-                    omeWebSockets.set(command.id as string, subscribeWebSocket);
+                    clientWebSocket.send(JSON.stringify(omeMessageFromOme));
+                    omeWebSockets.set(omeMessageFromOme.id as string, subscribeWebSocket);
                 };
                 subscribeWebSocket.onopen = () => {
                     subscribeWebSocket.send(JSON.stringify({ command: "request_offer" }));
-                };
-                subscribeWebSocket.onclose = () => {
-                    console.log("subscribeWebSocket[%s] closed", omeCommand.clientId);
                 };
                 break;
             }
@@ -104,22 +126,11 @@ wss.on("connection", (clientWebSocket: WebSocket) => {
             }
             case "answer":
             case "candidate": {
-                if (!omeCommand.id) {
-                    console.error("id is not found:%o", omeCommand);
-                    return;
-                }
-                const omeWebSocket = omeWebSockets.get(omeCommand.id);
-                if (!omeWebSocket) {
-                    console.error("websocket is not found:%o", omeCommand);
-                    return;
-                }
-                console.log("send message to clientWebSockets[%s]:%o", omeCommand.id, omeCommand);
-                omeWebSocket.send(message);
+                const omeWebSocket = omeWebSockets.get(omeMessageFromClient.id as string);
+                log(`send message to OME server: ${JSON.stringify(omeMessageFromClient)}`);
+                omeWebSocket?.send(message);
                 break;
             }
-            default:
-                console.error("unknown command:%o", omeCommand.command);
-                break;
         }
     });
 
@@ -150,11 +161,12 @@ wss.on("connection", (clientWebSocket: WebSocket) => {
         omeWebSockets.forEach((omeWebSocket) => {
             omeWebSocket.close();
         });
-        console.log("closed");
+
+        log("closed connection to client");
     });
 });
 
 const port = process.env.PORT || 3000;
 server.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    log(`Server is running on port ${port}`);
 });

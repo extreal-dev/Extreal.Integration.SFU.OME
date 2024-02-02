@@ -14,14 +14,18 @@ class OmeAdapter {
             }
             this.omeClient = new OmeClient(voiceChatConfig, {
                 onJoined: (streamName) => callback(this.withPrefix("HandleOnJoined"), streamName),
-                onLeft: (reason) => callback(this.withPrefix("HandleOnLeft"), reason),
+                onLeft: () => callback(this.withPrefix("HandleOnLeft")),
+                onUnexpectedLeft: (reason) => callback(this.withPrefix("HandleOnUnexpectedLeft"), reason),
                 onUserJoined: (streamName) => callback(this.withPrefix("HandleOnUserJoined"), streamName),
                 onUserLeft: (streamName) => callback(this.withPrefix("HandleOnUserLeft"), streamName),
+                handleGroupList: (groupListResponse) =>
+                    callback(this.withPrefix("ReceiveListHostsResponse"), JSON.stringify(groupListResponse)),
             });
         });
 
         addAction(this.withPrefix("DoReleaseManagedResources"), () => this.getOmeClient().releaseManagedResources());
-        addAction(this.withPrefix("DoConnectAsync"), (roomName) => this.getOmeClient().connect(roomName));
+        addAction(this.withPrefix("DoListGroupsAsync"), () => this.getOmeClient().listGroups());
+        addAction(this.withPrefix("DoConnectAsync"), (groupName) => this.getOmeClient().connect(groupName));
         addAction(this.withPrefix("DisconnectAsync"), () => this.getOmeClient().disconnect());
     };
 

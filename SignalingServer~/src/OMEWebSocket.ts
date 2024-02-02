@@ -1,56 +1,52 @@
 import WebSocket from "ws";
 
-export interface OMECommand {
+type OmeMessage = {
     id?: string;
     command?: string;
-    sdp?: RTCSessionDescriptionInit;
-    candidates?: RTCIceCandidateInit[];
+    groupListResponse?: groupListResponse;
 
     groupName?: string;
     clientId?: string;
 
     code?: number;
     error?: string;
-}
+};
 
-class OMEWebSocket extends WebSocket {
-    onMessageCallback: ((command: OMECommand) => void) | null = null;
+type groupListResponse = {
+    groups: GroupResponse[];
+};
 
-    constructor(url: string, protocols?: string | string[]) {
+type GroupResponse = {
+    id: string;
+    name: string;
+};
+
+class OmeWebSocket extends WebSocket {
+    public onMessageCallback: ((command: OmeMessage) => void) | null = null;
+
+    constructor(url: string, isLogging: boolean, protocols?: string | string[]) {
         super(url, protocols);
-        this.onopen = () => {
-            console.log("OMEWebSocket opened");
-        };
         this.onclose = () => {
-            console.log("OMEWebSocket closed");
+            if (isLogging) {
+                console.log("OMEWebSocket closed");
+            }
         };
         this.onerror = (error) => {
-            console.log("OMEWebSocket error: %o", error);
+            if (isLogging) {
+                console.log("OMEWebSocket error: %o", error);
+            }
         };
         this.onmessage = (event) => {
-            let msg;
-            try {
-                msg = JSON.parse(event.data.toString());
-            } catch (e) {
-                console.log("JSON parse error: %o", e);
-                return;
+            const message = JSON.parse(event.data.toString());
+            if (isLogging) {
+                console.log("OMEWebSocket onMessage: %o", message);
             }
-            console.log("OMEWebSocket onMessage: %o", msg);
 
             if (this.onMessageCallback) {
-                /*
-                if (!msg.id) msg.id = "";
-                if (!msg.command) msg.command = "unknown";
-                if (!msg.candidates) msg.candidates = [];
-                if (!msg.sdp) msg.sdp = { type: "unknown", sdp: "" };
-                if (!msg.roomName) msg.roomName = "";
-                if (!msg.streamName) msg.streamName = "";
-                */
-
-                this.onMessageCallback(msg);
+                this.onMessageCallback(message);
             }
         };
     }
 }
 
-export default OMEWebSocket;
+export { OmeWebSocket, OmeMessage };

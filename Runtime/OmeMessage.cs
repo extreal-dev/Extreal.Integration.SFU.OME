@@ -119,7 +119,7 @@ namespace Extreal.Integration.SFU.OME
     }
 
     [Serializable]
-    public class OmeCommand
+    public class OmeMessage
     {
         public int Id => id;
         [SerializeField] private int id;
@@ -144,7 +144,10 @@ namespace Extreal.Integration.SFU.OME
         public OmeIceServer[] IceServers => iceServers;
         [SerializeField] private OmeIceServer[] iceServers;
 
-        private static readonly ELogger Logger = LoggingManager.GetLogger(nameof(OmeCommand));
+        public GroupListResponse GroupListResponse => groupListResponse;
+        [SerializeField] private GroupListResponse groupListResponse;
+
+        private static readonly ELogger Logger = LoggingManager.GetLogger(nameof(OmeMessage));
 
         public RTCSessionDescription GetSdp()
             => Sdp.RtcSessionDescription;
@@ -158,34 +161,34 @@ namespace Extreal.Integration.SFU.OME
         public byte[] ToJsonBytes()
             => System.Text.Encoding.UTF8.GetBytes(ToJson());
 
-        public static OmeCommand FromJsonBytes(byte[] jsonBytes)
-            => JsonUtility.FromJson<OmeCommand>(System.Text.Encoding.UTF8.GetString(jsonBytes));
+        public static OmeMessage FromJsonBytes(byte[] jsonBytes)
+            => JsonUtility.FromJson<OmeMessage>(System.Text.Encoding.UTF8.GetString(jsonBytes));
 
         public static byte[] CreateAnswerMessage(int id, RTCSessionDescription answerSdp)
         {
             const string commandName = "answer";
-            var command = new OmeCommand
+            var message = new OmeMessage
             {
                 command = commandName,
                 id = id,
                 sdp = new OmeRTCSessionDescription(answerSdp),
             };
-            command.Log(commandName);
+            message.Log();
 
-            return command.ToJsonBytes();
+            return message.ToJsonBytes();
         }
 
         public static byte[] CreateJoinMessage(int id)
         {
             const string commandName = "join";
-            var command = new OmeCommand
+            var message = new OmeMessage
             {
                 command = commandName,
                 id = id,
             };
-            command.Log(commandName);
+            message.Log();
 
-            return command.ToJsonBytes();
+            return message.ToJsonBytes();
         }
 
         public static byte[] CreateIceCandidate(int id, RTCIceCandidate rtcIceCandidate)
@@ -197,7 +200,7 @@ namespace Extreal.Integration.SFU.OME
                 sdpMid = rtcIceCandidate.SdpMid,
                 sdpMLineIndex = rtcIceCandidate.SdpMLineIndex,
             };
-            var command = new OmeCommand
+            var message = new OmeMessage
             {
                 command = commandName,
                 id = id,
@@ -205,42 +208,54 @@ namespace Extreal.Integration.SFU.OME
                     new OmeIceCandidate(rtcIceCandidateInit),
                 },
             };
-            command.Log(commandName);
+            message.Log();
 
-            return command.ToJsonBytes();
+            return message.ToJsonBytes();
+        }
+
+        public static byte[] CreateListGroupsRequest()
+        {
+            const string commandName = "list groups";
+            var message = new OmeMessage
+            {
+                command = commandName,
+            };
+            message.Log();
+
+            return message.ToJsonBytes();
         }
 
         public static byte[] CreatePublishRequest(string groupName)
         {
             const string commandName = "publish";
-            var command = new OmeCommand
+            var message = new OmeMessage
             {
                 command = commandName,
                 groupName = groupName,
             };
-            command.Log(commandName);
+            message.Log();
 
-            return command.ToJsonBytes();
+            return message.ToJsonBytes();
         }
 
         public static byte[] CreateSubscribeRequest(string clientId)
         {
             const string commandName = "subscribe";
-            var command = new OmeCommand
+            var message = new OmeMessage
             {
                 command = commandName,
                 clientId = clientId,
             };
-            command.Log(commandName);
+            message.Log();
 
-            return command.ToJsonBytes();
+            return message.ToJsonBytes();
         }
 
-        private void Log(string commandName)
+        private void Log()
         {
             if (Logger.IsDebug())
             {
-                Logger.LogDebug($"Create {commandName} message: {ToJson()}");
+                Logger.LogDebug($"Create {command} message: {ToJson()}");
             }
         }
     }
