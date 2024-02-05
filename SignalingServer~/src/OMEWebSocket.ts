@@ -17,7 +17,6 @@ type groupListResponse = {
 };
 
 type GroupResponse = {
-    id: string;
     name: string;
 };
 

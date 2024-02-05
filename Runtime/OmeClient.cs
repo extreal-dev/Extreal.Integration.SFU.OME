@@ -104,7 +104,7 @@ namespace Extreal.Integration.SFU.OME
         public async UniTask<List<Group>> ListGroupsAsync()
         {
             var groupList = await DoListGroupsAsync();
-            return groupList.Groups.Select(groupResponse => new Group(groupResponse.Id, groupResponse.Name)).ToList();
+            return groupList.Groups.Select(groupResponse => new Group(groupResponse.Name)).ToList();
         }
 
         protected abstract UniTask<GroupListResponse> DoListGroupsAsync();

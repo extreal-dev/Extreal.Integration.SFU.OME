@@ -51,7 +51,7 @@ wss.on("connection", (clientWebSocket: WebSocket) => {
             case "list groups": {
                 log(`groupMembers: ${JSON.stringify(Object.fromEntries(groupMembers))}`);
                 omeMessageFromClient.groupListResponse = {
-                    groups: [...groupMembers].map((entry) => ({ name: entry[0], id: [...entry[1]][0] })),
+                    groups: [...groupMembers].map((entry) => ({ name: entry[0] })),
                 };
                 log(`list groups: ${JSON.stringify(omeMessageFromClient.groupListResponse)}`);
                 clientWebSocket.send(JSON.stringify(omeMessageFromClient));

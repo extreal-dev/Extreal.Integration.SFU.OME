@@ -14,8 +14,6 @@ namespace Extreal.Integration.SFU.OME
     [Serializable]
     public class GroupResponse
     {
-        public string Id => id;
-        [SerializeField] private string id;
 
         public string Name => name;
         [SerializeField] private string name;
