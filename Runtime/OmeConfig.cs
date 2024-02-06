@@ -2,11 +2,26 @@ using System.Collections.Generic;
 
 namespace Extreal.Integration.SFU.OME
 {
+    /// <summary>
+    /// Class that holds OME configuration.
+    /// </summary>
     public class OmeConfig
     {
+        /// <summary>
+        /// URL of the signaling server.
+        /// </summary>
         public string ServerUrl { get; }
+
+        /// <summary>
+        /// Ice server configurations.
+        /// </summary>
         public List<IceServerConfig> IceServerConfigs { get; }
 
+        /// <summary>
+        /// Creates a new OME configuration.
+        /// </summary>
+        /// <param name="url">URL of the signaling server</param>
+        /// <param name="iceServerConfigs">Ice server configurations</param>
         public OmeConfig(string serverUrl, List<IceServerConfig> iceServerConfigs = default)
         {
             ServerUrl = serverUrl;

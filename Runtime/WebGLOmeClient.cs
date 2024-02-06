@@ -10,6 +10,9 @@ using UnityEngine;
 
 namespace Extreal.Integration.SFU.OME
 {
+    /// <summary>
+    /// class that handles OME client for WebGL application.
+    /// </summary>
     public class WebGLOmeClient : OmeClient
     {
         private static WebGLOmeClient instance;
@@ -17,6 +20,10 @@ namespace Extreal.Integration.SFU.OME
 
         private readonly CancellationTokenSource cancellation = new CancellationTokenSource();
 
+        /// <summary>
+        /// Creates WebGLOmeClient with omeConfig.
+        /// </summary>
+        /// <param name="omeConfig">OME config.</param>
         public WebGLOmeClient(WebGLOmeConfig omeConfig) : base(omeConfig)
         {
             instance = this;

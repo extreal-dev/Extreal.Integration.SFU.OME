@@ -10,6 +10,9 @@ using Unity.WebRTC;
 
 namespace Extreal.Integration.SFU.OME
 {
+    /// <summary>
+    /// class that handles OME client for native application.
+    /// </summary>
     public class NativeOmeClient : OmeClient
     {
         private OmeWebSocket websocket;
@@ -23,6 +26,11 @@ namespace Extreal.Integration.SFU.OME
 
         private CompositeDisposable websocketDisposables = new CompositeDisposable();
 
+        /// <summary>
+        /// Creates NativeOmeClient with OmeConfig.
+        /// </summary>
+        /// <param name="omeConfig">OME config.</param>
+        /// <returns></returns>
         public NativeOmeClient(OmeConfig omeConfig) : base(omeConfig)
         {
             serverUrl = omeConfig.ServerUrl;
@@ -34,6 +42,7 @@ namespace Extreal.Integration.SFU.OME
             }).ToList();
         }
 
+        /// <inheritdoc/>
         protected override void DoReleaseManagedResources()
             => websocketDisposables.Dispose();
 
@@ -88,24 +97,43 @@ namespace Extreal.Integration.SFU.OME
             websocket = null;
         }
 
+        /// <summary>
+        /// Add a process to be called when creating a publish peer connection.
+        /// </summary>
+        /// <param name="hook"></param>
         public void AddPublishPcCreateHook(Action<string, OmeRTCPeerConnection> hook)
             => publishPcCreateHooks.Add(hook);
 
+        /// <summary>
+        /// Add a process to be called when creating a subscribe peer connection.
+        /// </summary>
+        /// <param name="hook"></param>
         public void AddSubscribePcCreateHook(Action<string, OmeRTCPeerConnection> hook)
             => subscribePcCreateHooks.Add(hook);
 
+        /// <summary>
+        /// Add a process to be called when a publish peer connection is terminated.
+        /// </summary>
+        /// <param name="hook"></param>
         public void AddPublishPcCloseHook(Action<string> hook)
             => publishPcCloseHooks.Add(hook);
 
+        /// <summary>
+        /// Add a process to be called when a subscribe peer connection is terminated.
+        /// </summary>
+        /// <param name="hook"></param>
         public void AddSubscribePcCloseHook(Action<string> hook)
             => subscribePcCloseHooks.Add(hook);
 
+        /// <inheritdoc/>
         protected override async UniTask<GroupListResponse> DoListGroupsAsync()
             => await (await GetSocketAsync()).ListGroupsAsync();
 
+        /// <inheritdoc/>
         protected override async UniTask DoConnectAsync(string roomName)
             => (await GetSocketAsync()).Connect(roomName);
 
+        /// <inheritdoc/>
         public override UniTask DisconnectAsync()
             => StopSocketAsync();
     }

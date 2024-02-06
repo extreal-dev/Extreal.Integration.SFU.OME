@@ -9,8 +9,15 @@ using UniRx;
 
 namespace Extreal.Integration.SFU.OME
 {
+    /// <summary>
+    /// Client class for OME connections.
+    /// </summary>
     public abstract class OmeClient : DisposableBase
     {
+        /// <summary>
+        /// <para>Invokes immediately after this client joined a group.</para>
+        /// Arg: Client ID of this client.
+        /// </summary>
         public IObservable<string> OnJoined => onJoined;
         private readonly Subject<string> onJoined;
         protected void FireOnJoined(string clientId) => UniTask.Void(async () =>
@@ -24,6 +31,10 @@ namespace Extreal.Integration.SFU.OME
             onJoined.OnNext(clientId);
         });
 
+        /// <summary>
+        /// <para>Invokes immediately after this client leaves a group.</para>
+        /// Arg: reason why this client leaves.
+        /// </summary>
         public IObservable<Unit> OnLeft => onLeft;
         private readonly Subject<Unit> onLeft;
         protected void FireOnLeft() => UniTask.Void(async () =>
@@ -37,6 +48,10 @@ namespace Extreal.Integration.SFU.OME
             onLeft.OnNext(Unit.Default);
         });
 
+        /// <summary>
+        /// <para>Invokes immediately after this client unexpectedly leaves a group.</para>
+        /// Arg: reason why this client leaves.
+        /// </summary>
         public IObservable<string> OnUnexpectedLeft => onUnexpectedLeft;
         private readonly Subject<string> onUnexpectedLeft;
         protected void FireOnUnexpectedLeft(string reason) => UniTask.Void(async () =>
@@ -50,6 +65,10 @@ namespace Extreal.Integration.SFU.OME
             onUnexpectedLeft.OnNext(reason);
         });
 
+        /// <summary>
+        /// <para>Invokes immediately after a client joined the same group this client joined.</para>
+        /// Arg: ID of the joined client.
+        /// </summary>
         public IObservable<string> OnUserJoined => onUserJoined;
         private readonly Subject<string> onUserJoined;
         protected void FireOnUserJoined(string clientId) => UniTask.Void(async () =>
@@ -63,6 +82,10 @@ namespace Extreal.Integration.SFU.OME
             onUserJoined.OnNext(clientId);
         });
 
+        /// <summary>
+        /// <para>Invokes immediately after a client left the group this client joined.</para>
+        /// Arg: ID of the left client.
+        /// </summary>
         public IObservable<string> OnUserLeft => onUserLeft;
         private readonly Subject<string> onUserLeft;
         protected void FireOnUserLeft(string clientId) => UniTask.Void(async () =>
@@ -81,6 +104,10 @@ namespace Extreal.Integration.SFU.OME
         private readonly CompositeDisposable disposables = new CompositeDisposable();
         private static readonly ELogger Logger = LoggingManager.GetLogger(nameof(OmeClient));
 
+        /// <summary>
+        /// Creates a new OmeClient.
+        /// </summary>
+        /// <param name="omeConfig">OME config.</param>
         [SuppressMessage("Usage", "CC0022")]
         protected OmeClient(OmeConfig omeConfig)
         {
@@ -93,22 +120,38 @@ namespace Extreal.Integration.SFU.OME
             onUserLeft = new Subject<string>().AddTo(disposables);
         }
 
+        /// <inheritdoc/>
         protected sealed override void ReleaseManagedResources()
         {
             DoReleaseManagedResources();
             disposables.Dispose();
         }
 
+        /// <summary>
+        /// Releases managed resources in sub class.
+        /// </summary>
         protected abstract void DoReleaseManagedResources();
 
+        /// <summary>
+        /// Lists groups that currently exist.
+        /// </summary>
+        /// <returns>List of the groups that currently exist.</returns>
         public async UniTask<List<Group>> ListGroupsAsync()
         {
             var groupList = await DoListGroupsAsync();
             return groupList.Groups.Select(groupResponse => new Group(groupResponse.Name)).ToList();
         }
 
+        /// <summary>
+        /// Lists groups that currently exist in sub class.
+        /// </summary>
+        /// <returns>List of the groups that currently exist.</returns>
         protected abstract UniTask<GroupListResponse> DoListGroupsAsync();
 
+        /// <summary>
+        /// Connects to a room.
+        /// </summary>
+        /// <param name="roomName">Room name to connect to.</param>
         public UniTask ConnectAsync(string roomName)
         {
             if (Logger.IsDebug())
@@ -119,8 +162,15 @@ namespace Extreal.Integration.SFU.OME
             return DoConnectAsync(roomName);
         }
 
+        /// <summary>
+        /// Connects to a room in sub class.
+        /// </summary>
+        /// <param name="roomName">Room name to connect to.</param>
         protected abstract UniTask DoConnectAsync(string roomName);
 
+        /// <summary>
+        /// Disconnect from connected room.
+        /// </summary>
         public abstract UniTask DisconnectAsync();
     }
 }
