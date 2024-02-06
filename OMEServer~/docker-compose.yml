@@ -4,7 +4,7 @@ services:
   ome:
     image: airensoft/ovenmediaengine:0.15.3
     container_name: ome_server
-    network_mode: "host"
+    #network_mode: "host"
     ports:
       - ${OME_ORIGIN_PORT:-9000}:${OME_ORIGIN_PORT:-9000}
       - ${OME_RTMP_PROV_PORT:-1935}:${OME_RTMP_PROV_PORT:-1935}

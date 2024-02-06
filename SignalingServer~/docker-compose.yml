@@ -8,13 +8,13 @@ services:
         restart: always
         tty: true
         env_file: ./.env
-        network_mode: "host"
+        #network_mode: "host"
         ports:
             - "3000:3000"
         volumes:
             - .:/app
-            #- ./keys/fullchain.pem:/work/keys/fullchain.pem:ro
-            #- ./keys/privkey.pem:/work/keys/privkey.pem:ro
+            - ./keys/fullchain.pem:/work/keys/fullchain.pem:ro
+            - ./keys/privkey.pem:/work/keys/privkey.pem:ro
         expose:
             - ${APP_PORT:-3000}
 
