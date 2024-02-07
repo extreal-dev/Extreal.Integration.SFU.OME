@@ -1,38 +1,41 @@
-import express from "express";
-import cors from "cors";
-import http from "http";
-import https from "https";
-import fs from "fs";
-import bodyParser from "body-parser";
-import WebSocket, { WebSocketServer } from "ws";
-import { OmeWebSocket, OmeMessage } from "./OMEWebSocket";
-import { v4 as uuidv4 } from "uuid";
+//import { serve, serverTLS} from "https://deno.land/std/http/server.ts";
+//import { serve } from "https://deno.land/std@0.212.0/http/server.ts";
+//import { WebSocketClient, WebSocketServer } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
+import * as mod from "https://deno.land/std@0.212.0/http/server.ts";
+import WebSocket, { WebSocketServer }  from "npm:ws@^8.5.9";
+import { OmeWebSocket, OmeMessage } from "./OMEWebSocket.ts";
+import { v4 as uuidv4 } from "https://deno.land/std/uuid/mod.ts";
 
-const isLogging = process.env.LOGGING === "on";
-const log = (message: string) => {
-    if (isLogging) {
-        console.log(message);
-    }
+const appPort = 3000;
+const isLogging = Deno.env.get("LOGGING")?.toLowerCase() === "on";
+
+const log = (logMessage: () => string | object) => {
+  if (isLogging) {
+    console.log(logMessage());
+  }
 };
 
-const app = express();
-app.use(cors());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+let server = serve({ port: appPort })
+/*
+if (Deno.env.get("USE_HTTPS") === "true") {
+  const privateKey = await Deno.readTextFile("./keys/privkey.pem");
+  const certificate = await Deno.readTextFile("./keys/fullchain.pem");
+  server = serve({
+    port: appPort,
+    cert: certificate,
+    key: privateKey,
+  })
 
-let server;
-if (process.env.USE_HTTPS === "true") {
-    const privateKey = fs.readFileSync("./keys/privkey.pem", "utf8");
-    const certificate = fs.readFileSync("./keys/fullchain.pem", "utf8");
-
-    const credentials = { key: privateKey, cert: certificate };
-    server = https.createServer(credentials, app);
-} else {
-    server = http.createServer(app);
+}else{
+  server = serve({ port: appPort });
 }
-const wss = new WebSocketServer({ server });
+*/
 
-const omeServerUrl = process.env.OME_SERVER_URL || "ws://localhost:3333";
+
+const wss = new WebSocketServer({ server });
+//const wss = new WebSocketServer(appPort);
+
+const omeServerUrl = Deno.env.get("OME_SERVER_URL") || "ws://localhost:3333";
 
 const groupMembers = new Map<string, Set<string>>();
 const clientWebSockets = new Map<string, WebSocket>();
@@ -166,7 +169,7 @@ wss.on("connection", (clientWebSocket: WebSocket) => {
     });
 });
 
-const port = process.env.PORT || 3000;
+const port = Deno.env.get("PORT") || "3000";
 server.listen(port, () => {
-    log(`Server is running on port ${port}`);
+  log(`Server is running on port ${port}`);
 });

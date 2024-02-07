@@ -1,4 +1,7 @@
-import WebSocket from "ws";
+//import WebSocket from "ws";
+//import { WebSocket } from "https://deno.land/std/ws/mod.ts";
+//import { WebSocketClient, WebSocketServer } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
+import WebSocket, { WebSocketServer }  from "npm:ws@^8.5.9";
 
 type OmeMessage = {
     id?: string;
@@ -20,7 +23,8 @@ type GroupResponse = {
     name: string;
 };
 
-class OmeWebSocket extends WebSocket {
+//class OmeWebSocket extends WebSocket {
+class OmeWebSocket extends WebSocketServer {
     public onMessageCallback: ((command: OmeMessage) => void) | null = null;
 
     constructor(url: string, isLogging: boolean, protocols?: string | string[]) {
