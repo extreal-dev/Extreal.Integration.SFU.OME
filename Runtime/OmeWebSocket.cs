@@ -117,18 +117,8 @@ namespace Extreal.Integration.SFU.OME
             }
         }
 
-        private void SendPublishRequest(string roomName) => UniTask.Void(async () =>
-        {
-            if (State != WebSocketState.Open)
-            {
-                if (Logger.IsDebug())
-                {
-                    Logger.LogDebug("WebSocket is not connected.");
-                }
-                return;
-            }
-            await Send(OmeMessage.CreatePublishRequest(roomName));
-        });
+        private void SendPublishRequest(string roomName)
+            => UniTask.Void(async () => await Send(OmeMessage.CreatePublishRequest(roomName)));
 
         private void OnCloseEvent(WebSocketCloseCode closeCode)
         {
