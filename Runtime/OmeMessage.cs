@@ -12,7 +12,7 @@ namespace Extreal.Integration.SFU.OME
     [Serializable]
     public class OmeRTCSessionDescription : ISerializationCallbackReceiver
     {
-        [SerializeField] private string type;
+        [SerializeField, SuppressMessage("Usage", "IDE0052")] private string type;
         [SerializeField] private string sdp;
         public RTCSessionDescription RtcSessionDescription => rtcSessionDescription;
         private RTCSessionDescription rtcSessionDescription;
