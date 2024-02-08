@@ -87,6 +87,7 @@ namespace Extreal.Integration.SFU.OME
         }
 
         ~OmeWebSocket()
+            // Not covered by testing due to defensive implementation
             => safeDisposer.DisposeByFinalizer();
 
         public void Dispose()
@@ -275,6 +276,7 @@ namespace Extreal.Integration.SFU.OME
                     }
                     else
                     {
+                        // Not covered by testing due to defensive implementation
                         if (Logger.IsError())
                         {
                             Logger.LogError($"Maximum retryCount reached: {message.ClientId}");
@@ -284,6 +286,7 @@ namespace Extreal.Integration.SFU.OME
                 }
                 else
                 {
+                    // Not covered by testing due to defensive implementation
                     if (Logger.IsError())
                     {
                         Logger.LogError($"Subscribe error: {message.Error}");

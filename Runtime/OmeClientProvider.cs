@@ -19,6 +19,7 @@ namespace Extreal.Integration.SFU.OME
         {
             if (omeConfig == null)
             {
+                // Not covered by testing due to defensive implementation
                 throw new ArgumentNullException(nameof(omeConfig));
             }
 
