@@ -91,7 +91,7 @@ namespace Extreal.Integration.SFU.OME
                 // Not covered by testing due to defensive implementation
                 return;
             }
-            await websocket.Close();
+            await websocket.Close().AsUniTask();
             websocketDisposables.Dispose();
             websocketDisposables = new CompositeDisposable();
             websocket = null;
