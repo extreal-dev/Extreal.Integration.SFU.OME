@@ -92,7 +92,7 @@ class OmeClient {
         if (this.socket === null) {
             return;
         }
-        this.socket.close();
+        this.socket.close(1000);
         this.socket = null;
     };
 
