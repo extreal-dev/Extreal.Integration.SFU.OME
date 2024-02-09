@@ -52,10 +52,10 @@ namespace Extreal.Integration.SFU.OME.MVS.OmeControl
         }
 
         private async UniTask StartOmeClientAsync(AppState appState)
-            => await omeClient.ConnectAsync(appState.GroupName);
+            => await omeClient.JoinAsync(appState.GroupName);
 
         private async UniTask StopOmeClientAsync()
-            => await omeClient.DisconnectAsync();
+            => await omeClient.LeaveAsync();
 
         protected override void ReleaseManagedResources() => disposables.Dispose();
     }

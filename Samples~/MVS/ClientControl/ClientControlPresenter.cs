@@ -41,11 +41,11 @@ namespace Extreal.Integration.SFU.OME.MVS.ClientControl
                 .AddTo(disposables);
 
             omeClient.OnUserJoined
-                .Subscribe(id => appState.Notify($"Received: {nameof(OmeClient.OnUserJoined)}{Environment.NewLine}Connecting user ID: {id}"))
+                .Subscribe(id => appState.Notify($"Received: {nameof(OmeClient.OnUserJoined)}{Environment.NewLine}Joining user ID: {id}"))
                 .AddTo(disposables);
 
             omeClient.OnUserLeft
-                .Subscribe(id => appState.Notify($"Received: {nameof(OmeClient.OnUserLeft)}{Environment.NewLine}Disconnecting user ID: {id}"))
+                .Subscribe(id => appState.Notify($"Received: {nameof(OmeClient.OnUserLeft)}{Environment.NewLine}Leaving user ID: {id}"))
                 .AddTo(disposables);
         }
 

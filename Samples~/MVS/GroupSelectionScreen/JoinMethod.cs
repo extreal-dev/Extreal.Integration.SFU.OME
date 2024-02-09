@@ -1,4 +1,3 @@
-
 namespace Extreal.Integration.SFU.OME.MVS
 {
     public enum JoinMethod

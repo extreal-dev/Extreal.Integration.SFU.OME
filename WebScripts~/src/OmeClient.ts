@@ -116,11 +116,11 @@ class OmeClient {
         (await this.getSocket()).listGroups();
     };
 
-    public connect = async (groupName: string) => {
+    public join = async (groupName: string) => {
         (await this.getSocket()).connect(groupName);
     };
 
-    public disconnect = () => {
+    public leave = () => {
         this.stopSocket();
     };
 }

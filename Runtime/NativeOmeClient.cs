@@ -130,11 +130,11 @@ namespace Extreal.Integration.SFU.OME
             => await (await GetSocketAsync()).ListGroupsAsync();
 
         /// <inheritdoc/>
-        protected override async UniTask DoConnectAsync(string roomName)
+        protected override async UniTask DoJoinAsync(string roomName)
             => (await GetSocketAsync()).Connect(roomName);
 
         /// <inheritdoc/>
-        public override UniTask DisconnectAsync()
+        public override UniTask LeaveAsync()
             => StopSocketAsync();
     }
 }

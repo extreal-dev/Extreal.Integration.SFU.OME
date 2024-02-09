@@ -25,8 +25,8 @@ class OmeAdapter {
 
         addAction(this.withPrefix("DoReleaseManagedResources"), () => this.getOmeClient().releaseManagedResources());
         addAction(this.withPrefix("DoListGroupsAsync"), () => this.getOmeClient().listGroups());
-        addAction(this.withPrefix("DoConnectAsync"), (groupName) => this.getOmeClient().connect(groupName));
-        addAction(this.withPrefix("DisconnectAsync"), () => this.getOmeClient().disconnect());
+        addAction(this.withPrefix("DoJoinAsync"), (groupName) => this.getOmeClient().join(groupName));
+        addAction(this.withPrefix("LeaveAsync"), () => this.getOmeClient().leave());
     };
 
     private withPrefix = (name: string) => `WebGLOmeClient#${name}`;
