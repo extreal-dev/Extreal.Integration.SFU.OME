@@ -276,7 +276,6 @@ namespace Extreal.Integration.SFU.OME
                     }
                     else
                     {
-                        // Not covered by testing due to defensive implementation
                         if (Logger.IsError())
                         {
                             Logger.LogError($"Maximum retryCount reached: {message.ClientId}");
@@ -371,6 +370,7 @@ namespace Extreal.Integration.SFU.OME
         {
             if (State != WebSocketState.Open)
             {
+                // Not covered by testing due to defensive implementation
                 if (Logger.IsDebug())
                 {
                     Logger.LogDebug("WebSocket is not connected.");
