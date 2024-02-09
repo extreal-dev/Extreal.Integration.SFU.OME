@@ -23,5 +23,5 @@ services:
             #- ./keys/privkey.pem:/work/keys/privkey.pem:ro
         expose:
             - ${APP_PORT:-3000}
-        entrypoint: ["deno", "run", "--allow-env", "--allow-net","--allow-read=/node_modules","./src/index.ts"]
+        entrypoint: ["deno", "run", "--allow-env", "--allow-net","--allow-read","./src/index.ts"]
 
