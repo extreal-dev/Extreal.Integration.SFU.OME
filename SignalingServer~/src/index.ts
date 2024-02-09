@@ -1,4 +1,4 @@
-import {serve} from "https://deno.land/std/http/server.ts";
+import {serve, serveTls} from "https://deno.land/std/http/server.ts";
 import {v4} from "https://deno.land/std/uuid/mod.ts";
 import {OmeWebSocket, OmeMessage} from "./OMEWebSocket.ts";
 
@@ -118,16 +118,37 @@ const handleWebSocket = (ws: WebSocket) => {
   };
 };
 
-serve(
-  (req) => {
+
+const useHttps = Deno.env.get("USE_HTTPS") === "true";
+
+if (useHttps) {
+  const options = {
+    hostname: "localhost",
+    port: 3000,
+    certFile: "./keys/fullchain.pem", // あなたの証明書へのパス
+    keyFile: "./path/to/your/key.pem", // あなたの秘密鍵へのパス
+  };
+
+  serveTls(options, (req) => {
     if (req.headers.get("upgrade") !== "websocket") {
       return new Response("not found", {status: 404});
     }
     const {socket, response} = Deno.upgradeWebSocket(req);
     handleWebSocket(socket);
     return response;
-  },
-  {port: port},
-);
-
-log(`Server is running on ws://localhost:${port}`);
+  });
+  console.log(`Server is running on wss://localhost:${port}`);
+} else {
+  serve(
+    (req) => {
+      if (req.headers.get("upgrade") !== "websocket") {
+        return new Response("not found", {status: 404});
+      }
+      const {socket, response} = Deno.upgradeWebSocket(req);
+      handleWebSocket(socket);
+      return response;
+    },
+    {port: port},
+  );
+  console.log(`Server is running on ws://localhost:${port}`);
+}
