@@ -126,7 +126,7 @@ if (useHttps) {
     hostname: "localhost",
     port: 3000,
     certFile: "./keys/fullchain.pem", // あなたの証明書へのパス
-    keyFile: "./path/to/your/key.pem", // あなたの秘密鍵へのパス
+    keyFile: "./keys/privkey.pem", // あなたの秘密鍵へのパス
   };
 
   serveTls(options, (req) => {
