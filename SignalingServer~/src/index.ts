@@ -122,7 +122,7 @@ const handleWebSocket = (ws: WebSocket) => {
 const useHttps = Deno.env.get("USE_HTTPS") === "true";
 
 if (useHttps) {
-  serveTls(options, (req) => {
+  serveTls((req) => {
       if (req.headers.get("upgrade") !== "websocket") {
         return new Response("not found", {status: 404});
       }
