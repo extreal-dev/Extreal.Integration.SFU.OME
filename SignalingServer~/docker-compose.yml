@@ -3,12 +3,10 @@ version: '3.8'
 services:
     sigapp:
         image: denoland/deno:alpine-1.39.4
-        #build: .
         container_name: sigapp
         init: true
         restart: always
         tty: true
-        #env_file: ./.env
         network_mode: "host"
         ports:
             - "3000:3000"
@@ -17,7 +15,6 @@ services:
             APP_PORT: ${APP_PORT:-3000}
             OME_SERVER_URL: ${OME_SERVER_URL:-wss://ome-sfu.extreal.net:3334}
             LOGGING: ${LOGGING:-on}
-            # In production, change it to suit the environment.
             MESSAGING_CORS_ORIGIN: ${MESSAGING_CORS_ORIGIN:-*}
         working_dir: /src
         volumes:
@@ -27,16 +24,4 @@ services:
         expose:
             - ${APP_PORT:-3000}
         entrypoint: ["deno", "run", "--allow-env", "--allow-net","--allow-read=/node_modules","./src/index.ts"]
-    nginx:
-      image: nginx:1.24.0
-      container_name: nginx
-      restart: always
-      ports:
-        - '443:443'
-      volumes:
-        - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-        - ./keys/fullchain.pem:/etc/nginx/fullchain.pem:ro
-        - ./keys/privkey.pem:/etc/nginx/privkey.pem:ro
-      depends_on:
-        - sigapp
 
