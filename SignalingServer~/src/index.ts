@@ -125,8 +125,8 @@ if (useHttps) {
   const options = {
     hostname: "localhost",
     port: 3000,
-    certFile: "./keys/fullchain.pem", // あなたの証明書へのパス
-    keyFile: "./keys/privkey.pem", // あなたの秘密鍵へのパス
+    certFile: "/work/keys/fullchain.pem", 
+    keyFile: "/work/keys/privkey.pem",
   };
 
   serveTls(options, (req) => {
