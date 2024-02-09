@@ -1,7 +1,4 @@
 //import WebSocket from "ws";
-//import { WebSocket } from "https://deno.land/std/ws/mod.ts";
-//import { WebSocketClient, WebSocketServer } from "https://deno.land/x/websocket@v0.1.4/mod.ts";
-import WebSocket, { WebSocketServer }  from "npm:ws@^8.5.9";
 
 type OmeMessage = {
     id?: string;
@@ -23,23 +20,25 @@ type GroupResponse = {
     name: string;
 };
 
+//class OmeWebSocket extends WebSocketServer {
 //class OmeWebSocket extends WebSocket {
-class OmeWebSocket extends WebSocketServer {
+class OmeWebSocket {
     public onMessageCallback: ((command: OmeMessage) => void) | null = null;
-
+    public ws: WebSocket;
     constructor(url: string, isLogging: boolean, protocols?: string | string[]) {
-        super(url, protocols);
-        this.onclose = () => {
+        //const { response, socket } = Deno.upgradeWebSocket(req);
+        this.ws = new WebSocket(url, protocols);
+        this.ws.onclose = () => {
             if (isLogging) {
                 console.log("OMEWebSocket closed");
             }
         };
-        this.onerror = (error) => {
+        this.ws.onerror = (error) => {
             if (isLogging) {
                 console.log("OMEWebSocket error: %o", error);
             }
         };
-        this.onmessage = (event) => {
+        this.ws.onmessage = (event) => {
             const message = JSON.parse(event.data.toString());
             if (isLogging) {
                 console.log("OMEWebSocket onMessage: %o", message);
