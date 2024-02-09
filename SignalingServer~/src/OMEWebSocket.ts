@@ -1,5 +1,3 @@
-//import WebSocket from "ws";
-
 type OmeMessage = {
     id?: string;
     command?: string;
@@ -20,13 +18,10 @@ type GroupResponse = {
     name: string;
 };
 
-//class OmeWebSocket extends WebSocketServer {
-//class OmeWebSocket extends WebSocket {
 class OmeWebSocket {
     public onMessageCallback: ((command: OmeMessage) => void) | null = null;
     public ws: WebSocket;
     constructor(url: string, isLogging: boolean, protocols?: string | string[]) {
-        //const { response, socket } = Deno.upgradeWebSocket(req);
         this.ws = new WebSocket(url, protocols);
         this.ws.onclose = () => {
             if (isLogging) {
