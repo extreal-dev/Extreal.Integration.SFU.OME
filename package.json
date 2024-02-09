@@ -13,5 +13,11 @@
     "jp.co.tis.extreal.core.common": "1.2.0-next.1",
     "com.endel.nativewebsocket": "1.1.4",
     "com.unity.webrtc": "3.0.0-pre.7"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "MVS",
+      "path": "Samples~/MVS"
+    }
+  ]
 }
