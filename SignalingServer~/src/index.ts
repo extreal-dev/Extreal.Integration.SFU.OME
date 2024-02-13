@@ -122,22 +122,11 @@ const handleWebSocket = (ws: WebSocket) => {
 const useHttps = Deno.env.get("USE_HTTPS") === "true";
 
 if (useHttps) {
-  serveTls((req) => {
-      if (req.headers.get("upgrade") !== "websocket") {
-        return new Response("not found", {status: 404});
-      }
-      const {socket, response} = Deno.upgradeWebSocket(req);
-      handleWebSocket(socket);
-      return response;
-    },
-    {
+  Deno.serve({
       port: 3000,
-      certFile: "/work/keys/fullchain.pem",
-      keyFile: "/work/keys/privkey.pem",
-    });
-  console.log(`Server is running on wss://localhost:${port}`);
-} else {
-  serve(
+      cert: "/work/keys/fullchain.pem",
+      key: "/work/keys/privkey.pem",
+    },
     (req) => {
       if (req.headers.get("upgrade") !== "websocket") {
         return new Response("not found", {status: 404});
@@ -145,8 +134,20 @@ if (useHttps) {
       const {socket, response} = Deno.upgradeWebSocket(req);
       handleWebSocket(socket);
       return response;
-    },
+    }
+  );
+  console.log(`Server is running on wss://localhost:${port}`);
+} else {
+  Deno.serve(
     {port: port},
+    (req) => {
+      if (req.headers.get("upgrade") !== "websocket") {
+        return new Response("not found", {status: 404});
+      }
+      const {socket, response} = Deno.upgradeWebSocket(req);
+      handleWebSocket(socket);
+      return response;
+    }
   );
   console.log(`Server is running on ws://localhost:${port}`);
 }
