@@ -87,6 +87,7 @@ namespace Extreal.Integration.SFU.OME
         }
 
         ~OmeWebSocket()
+            // Not covered by testing due to defensive implementation
             => safeDisposer.DisposeByFinalizer();
 
         public void Dispose()
@@ -117,18 +118,8 @@ namespace Extreal.Integration.SFU.OME
             }
         }
 
-        private void SendPublishRequest(string roomName) => UniTask.Void(async () =>
-        {
-            if (State != WebSocketState.Open)
-            {
-                if (Logger.IsDebug())
-                {
-                    Logger.LogDebug("WebSocket is not connected.");
-                }
-                return;
-            }
-            await Send(OmeMessage.CreatePublishRequest(roomName));
-        });
+        private void SendPublishRequest(string roomName)
+            => UniTask.Void(async () => await Send(OmeMessage.CreatePublishRequest(roomName)));
 
         private void OnCloseEvent(WebSocketCloseCode closeCode)
         {
@@ -294,6 +285,7 @@ namespace Extreal.Integration.SFU.OME
                 }
                 else
                 {
+                    // Not covered by testing due to defensive implementation
                     if (Logger.IsError())
                     {
                         Logger.LogError($"Subscribe error: {message.Error}");
@@ -378,6 +370,7 @@ namespace Extreal.Integration.SFU.OME
         {
             if (State != WebSocketState.Open)
             {
+                // Not covered by testing due to defensive implementation
                 if (Logger.IsDebug())
                 {
                     Logger.LogDebug("WebSocket is not connected.");

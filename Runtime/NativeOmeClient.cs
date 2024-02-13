@@ -91,7 +91,7 @@ namespace Extreal.Integration.SFU.OME
                 // Not covered by testing due to defensive implementation
                 return;
             }
-            await websocket.Close();
+            await websocket.Close().AsUniTask();
             websocketDisposables.Dispose();
             websocketDisposables = new CompositeDisposable();
             websocket = null;
@@ -130,11 +130,11 @@ namespace Extreal.Integration.SFU.OME
             => await (await GetSocketAsync()).ListGroupsAsync();
 
         /// <inheritdoc/>
-        protected override async UniTask DoConnectAsync(string roomName)
+        protected override async UniTask DoJoinAsync(string roomName)
             => (await GetSocketAsync()).Connect(roomName);
 
         /// <inheritdoc/>
-        public override UniTask DisconnectAsync()
+        public override UniTask LeaveAsync()
             => StopSocketAsync();
     }
 }

@@ -92,7 +92,7 @@ class OmeClient {
         if (this.socket === null) {
             return;
         }
-        this.socket.close();
+        this.socket.close(1000);
         this.socket = null;
     };
 
@@ -116,11 +116,11 @@ class OmeClient {
         (await this.getSocket()).listGroups();
     };
 
-    public connect = async (groupName: string) => {
+    public join = async (groupName: string) => {
         (await this.getSocket()).connect(groupName);
     };
 
-    public disconnect = () => {
+    public leave = () => {
         this.stopSocket();
     };
 }

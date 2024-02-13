@@ -12,7 +12,7 @@ namespace Extreal.Integration.SFU.OME
     [Serializable]
     public class OmeRTCSessionDescription : ISerializationCallbackReceiver
     {
-        [SerializeField] private string type;
+        [SerializeField, SuppressMessage("Usage", "IDE0052")] private string type;
         [SerializeField] private string sdp;
         public RTCSessionDescription RtcSessionDescription => rtcSessionDescription;
         private RTCSessionDescription rtcSessionDescription;
@@ -30,31 +30,12 @@ namespace Extreal.Integration.SFU.OME
             {
                 type = "answer";
             }
-            else if (rtcSessionDescription.type is RTCSdpType.Pranswer)
-            {
-                type = "pranswer";
-            }
-            else if (rtcSessionDescription.type is RTCSdpType.Rollback)
-            {
-                type = "rollback";
-            }
             sdp = rtcSessionDescription.sdp;
         }
 
         public void OnAfterDeserialize()
         {
-            if (type == "offer")
-            {
-                rtcSessionDescription.type = RTCSdpType.Offer;
-            }
-            else if (type == "answer")
-            {
-                rtcSessionDescription.type = RTCSdpType.Answer;
-            }
-            else if (type == "rollback")
-            {
-                rtcSessionDescription.type = RTCSdpType.Rollback;
-            }
+            rtcSessionDescription.type = RTCSdpType.Offer;
             rtcSessionDescription.sdp = sdp;
         }
     }
@@ -98,9 +79,6 @@ namespace Extreal.Integration.SFU.OME
         [SerializeField] private string[] urls;
         public RTCIceServer RtcIceServer => rtcIceServer;
         private RTCIceServer rtcIceServer;
-
-        public OmeIceServer(RTCIceServer rtcIceServer)
-            => this.rtcIceServer = rtcIceServer;
 
         public void OnBeforeSerialize()
         {

@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@extreal-dev/extreal.integration.web.common@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.npmjs.org/@extreal-dev/extreal.integration.web.common/-/extreal.integration.web.common-1.0.0.tgz"
-  integrity sha512-aH5A5ClpaKVUFE1DbvYVy4L7J81wo+oQmBJJmc6geR5CQTa7942CUYW11jnPp5hCq1QXG+jz/yVpU26p00I+Qw==
+"@extreal-dev/extreal.integration.web.common@1.1.0-next.2":
+  version "1.1.0-next.2"
+  resolved "https://registry.yarnpkg.com/@extreal-dev/extreal.integration.web.common/-/extreal.integration.web.common-1.1.0-next.2.tgz#752a8c9b89a4d92e49220b75cf39cb7070434a03"
+  integrity sha512-1xnnY+qGaL48bKy9X+ZStEO2yQ7xku4ChHvrADmtyFYlUMV2bhZUyxLkGrljFRp2qmor488AU29/UK5AibfkaQ==
 
 "@jridgewell/gen-mapping@^0.3.0":
   version "0.3.3"
