@@ -1,5 +1,4 @@
 import {serve, serveTls} from "https://deno.land/std/http/server.ts";
-import {v4} from "https://deno.land/std/uuid/mod.ts";
 import {OmeWebSocket, OmeMessage} from "./OMEWebSocket.ts";
 
 const isLogging = Deno.env.get("LOGGING") === "on";
@@ -13,8 +12,8 @@ const port = Number(Deno.env.get("PORT")) || 3000;
 const handleWebSocket = (ws: WebSocket) => {
   let groupName = "";
   let clientId = "";
-  let clientWebSocket = ws;
-  const omeWebSockets = new Map<string, any>();
+  const clientWebSocket = ws;
+  const omeWebSockets = new Map<string, OmeWebSocket>();
 
   clientId = crypto.randomUUID();
 
@@ -23,7 +22,7 @@ const handleWebSocket = (ws: WebSocket) => {
   }
 
   ws.onmessage = (event) => {
-    let dataStr = new TextDecoder().decode(event.data);
+    const dataStr = new TextDecoder().decode(event.data);
     const omeMessageFromClient = JSON.parse(dataStr);
     log(`received message from client: ${JSON.stringify(omeMessageFromClient)}`);
 
@@ -113,6 +112,35 @@ const handleWebSocket = (ws: WebSocket) => {
   }
 
   ws.onclose = () => {
+    if (!groupName) {
+        return;
+    }
+
+    const members = groupMembers.get(groupName);
+    if (members) {
+        members.delete(clientId);
+        members.forEach((member) => {
+            const memberClientWebSocket = clientWebSockets.get(member);
+            if (memberClientWebSocket) {
+                memberClientWebSocket.send(
+                    JSON.stringify({
+                        command: "leave",
+                        clientId: clientId,
+                    }),
+                );
+            }
+        });
+        if (members.size === 0) {
+            groupMembers.delete(groupName);
+        }
+    }
+    clientWebSockets.delete(clientId);
+    omeWebSockets.forEach((omeWebSocket) => {
+        omeWebSocket.ws.close();
+    });
+
+    log("closed connection to client");
+
     clientWebSockets.delete(clientId);
     log("closed connection to client");
   };
