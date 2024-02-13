@@ -1,172 +1,152 @@
-import express from "express";
-import cors from "cors";
-import http from "http";
-import https from "https";
-import fs from "fs";
-import bodyParser from "body-parser";
-import WebSocket, { WebSocketServer } from "ws";
-import { OmeWebSocket, OmeMessage } from "./OMEWebSocket";
-import { v4 as uuidv4 } from "uuid";
+import {serve, serveTls} from "https://deno.land/std/http/server.ts";
+import {v4} from "https://deno.land/std/uuid/mod.ts";
+import {OmeWebSocket, OmeMessage} from "./OMEWebSocket.ts";
 
-const isLogging = process.env.LOGGING === "on";
-const log = (message: string) => {
-    if (isLogging) {
-        console.log(message);
-    }
-};
+const isLogging = Deno.env.get("LOGGING") === "on";
+const log = (message: string) => isLogging && console.log(message);
 
-const app = express();
-app.use(cors());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-
-let server;
-if (process.env.USE_HTTPS === "true") {
-    const privateKey = fs.readFileSync("./keys/privkey.pem", "utf8");
-    const certificate = fs.readFileSync("./keys/fullchain.pem", "utf8");
-
-    const credentials = { key: privateKey, cert: certificate };
-    server = https.createServer(credentials, app);
-} else {
-    server = http.createServer(app);
-}
-const wss = new WebSocketServer({ server });
-
-const omeServerUrl = process.env.OME_SERVER_URL || "ws://localhost:3333";
-
+const omeServerUrl = Deno.env.get("OME_SERVER_URL") || "ws://localhost:3333";
 const groupMembers = new Map<string, Set<string>>();
 const clientWebSockets = new Map<string, WebSocket>();
+const port = Number(Deno.env.get("PORT")) || 3000;
 
-wss.on("connection", (clientWebSocket: WebSocket) => {
-    let groupName = "";
-    let clientId = "";
-    const omeWebSockets = new Map<string, OmeWebSocket>();
+const handleWebSocket = (ws: WebSocket) => {
+  let groupName = "";
+  let clientId = "";
+  let clientWebSocket = ws;
+  const omeWebSockets = new Map<string, any>();
 
-    log("connected to client");
+  clientId = crypto.randomUUID();
 
-    clientWebSocket.on("message", (message) => {
-        const omeMessageFromClient: OmeMessage = JSON.parse(message.toString());
-        log(`received message from client: ${JSON.stringify(omeMessageFromClient)}`);
-        switch (omeMessageFromClient.command) {
-            case "list groups": {
-                log(`groupMembers: ${JSON.stringify(Object.fromEntries(groupMembers))}`);
-                omeMessageFromClient.groupListResponse = {
-                    groups: [...groupMembers].map((entry) => ({ name: entry[0] })),
-                };
-                log(`list groups: ${JSON.stringify(omeMessageFromClient.groupListResponse)}`);
-                clientWebSocket.send(JSON.stringify(omeMessageFromClient));
-                break;
-            }
-            case "publish": {
-                clientId = uuidv4();
-                groupName = omeMessageFromClient.groupName as string;
-                log(`publish: groupName=${groupName}, clientId: ${clientId}`);
-                const publishWebSocket = new OmeWebSocket(`${omeServerUrl}/app/${clientId}?direction=send`, isLogging);
-                publishWebSocket.onMessageCallback = (omeMessageFromOme: OmeMessage) => {
-                    omeMessageFromOme.command = "publish offer";
-                    omeMessageFromOme.clientId = clientId;
-                    clientWebSocket.send(JSON.stringify(omeMessageFromOme));
+  ws.onopen = () => {
+    clientWebSockets.set(clientId, clientWebSocket);
+  }
 
-                    clientWebSockets.set(clientId, clientWebSocket);
-                    omeWebSockets.set(omeMessageFromOme.id as string, publishWebSocket);
-                };
-                publishWebSocket.onopen = () => {
-                    publishWebSocket.send(JSON.stringify({ command: "request_offer" }));
-                };
-                break;
-            }
-            case "subscribe": {
-                log(`subscribe: clientId=${omeMessageFromClient.clientId}`);
-                const subscribeWebSocket = new OmeWebSocket(
-                    `${omeServerUrl}/app/${omeMessageFromClient.clientId}`,
-                    isLogging,
-                );
-                subscribeWebSocket.onMessageCallback = (omeMessageFromOme: OmeMessage) => {
-                    log(
-                        `received message from OME server: id=${omeMessageFromOme.id}, clientId=${omeMessageFromOme.command}`,
-                    );
-                    omeMessageFromOme.command = "subscribe offer";
-                    omeMessageFromOme.clientId = omeMessageFromClient.clientId;
+  ws.onmessage = (event) => {
+    let dataStr = new TextDecoder().decode(event.data);
+    const omeMessageFromClient = JSON.parse(dataStr);
+    log(`received message from client: ${JSON.stringify(omeMessageFromClient)}`);
 
-                    if (
-                        omeMessageFromOme.code &&
-                        omeMessageFromOme.code === 404 &&
-                        omeMessageFromOme.error === "Cannot create offer"
-                    ) {
-                        subscribeWebSocket.close();
-                        clientWebSocket.send(JSON.stringify(omeMessageFromOme));
-                        return;
-                    }
-                    clientWebSocket.send(JSON.stringify(omeMessageFromOme));
-                    omeWebSockets.set(omeMessageFromOme.id as string, subscribeWebSocket);
-                };
-                subscribeWebSocket.onopen = () => {
-                    subscribeWebSocket.send(JSON.stringify({ command: "request_offer" }));
-                };
-                break;
-            }
-            case "join": {
-                const members = groupMembers.get(groupName);
-                if (members) {
-                    members.forEach((member) => {
-                        const memberClientWebSocket = clientWebSockets.get(member);
-                        if (memberClientWebSocket) {
-                            memberClientWebSocket.send(JSON.stringify({ command: "join", clientId: clientId }));
-                        }
-                        clientWebSocket.send(JSON.stringify({ command: "join", clientId: member }));
-                    });
-                }
-                const roomSet = groupMembers.get(groupName);
-                if (roomSet) {
-                    roomSet.add(clientId);
-                } else {
-                    groupMembers.set(groupName, new Set<string>([clientId]));
-                }
-                break;
-            }
-            case "answer":
-            case "candidate": {
-                const omeWebSocket = omeWebSockets.get(omeMessageFromClient.id as string);
-                log(`send message to OME server: ${JSON.stringify(omeMessageFromClient)}`);
-                omeWebSocket?.send(message);
-                break;
-            }
-        }
-    });
+    switch (omeMessageFromClient.command) {
+      case "list groups": {
+        log(`groupMembers: ${JSON.stringify(Object.fromEntries(groupMembers))}`);
+        omeMessageFromClient.groupListResponse = {
+          groups: [...groupMembers].map((entry) => ({name: entry[0]})),
+        };
+        log(`list groups: ${JSON.stringify(omeMessageFromClient.groupListResponse)}`);
+        clientWebSocket.send(JSON.stringify(omeMessageFromClient));
+        break;
+      }
+      case "publish": {
+        groupName = omeMessageFromClient.groupName as string;
+        log(`publish: groupName=${groupName}, clientId: ${clientId}`);
+        const publishWebSocket = new OmeWebSocket(`${omeServerUrl}/app/${clientId}?direction=send`, isLogging);
+        publishWebSocket.onMessageCallback = (omeMessageFromOme: OmeMessage) => {
+          omeMessageFromOme.command = "publish offer";
+          omeMessageFromOme.clientId = clientId;
+          clientWebSocket.send(JSON.stringify(omeMessageFromOme));
 
-    clientWebSocket.on("close", () => {
-        if (!groupName) {
+          omeWebSockets.set(omeMessageFromOme.id as string, publishWebSocket);
+        };
+        publishWebSocket.ws.onopen = () => {
+          publishWebSocket.ws.send(JSON.stringify({command: "request_offer"}));
+        };
+        break;
+      }
+      case "subscribe": {
+        log(`subscribe: clientId=${omeMessageFromClient.clientId}`);
+        const subscribeWebSocket = new OmeWebSocket(
+          `${omeServerUrl}/app/${omeMessageFromClient.clientId}`,
+          isLogging,
+        );
+        subscribeWebSocket.onMessageCallback = (omeMessageFromOme: OmeMessage) => {
+          log(
+            `received message from OME server: id=${omeMessageFromOme.id}, clientId=${omeMessageFromOme.command}`,
+          );
+          omeMessageFromOme.command = "subscribe offer";
+          omeMessageFromOme.clientId = omeMessageFromClient.clientId;
+
+          if (
+            omeMessageFromOme.code &&
+            omeMessageFromOme.code === 404 &&
+            omeMessageFromOme.error === "Cannot create offer"
+          ) {
+            subscribeWebSocket.ws.close();
+            clientWebSocket.send(JSON.stringify(omeMessageFromOme));
             return;
-        }
-
+          }
+          clientWebSocket.send(JSON.stringify(omeMessageFromOme));
+          omeWebSockets.set(omeMessageFromOme.id as string, subscribeWebSocket);
+        };
+        subscribeWebSocket.ws.onopen = () => {
+          subscribeWebSocket.ws.send(JSON.stringify({command: "request_offer"}));
+        };
+        break;
+      }
+      case "join": {
         const members = groupMembers.get(groupName);
         if (members) {
-            members.delete(clientId);
-            members.forEach((member) => {
-                const memberClientWebSocket = clientWebSockets.get(member);
-                if (memberClientWebSocket) {
-                    memberClientWebSocket.send(
-                        JSON.stringify({
-                            command: "leave",
-                            clientId: clientId,
-                        }),
-                    );
-                }
-            });
-            if (members.size === 0) {
-                groupMembers.delete(groupName);
+          members.forEach((member) => {
+            const memberClientWebSocket = clientWebSockets.get(member);
+            if (memberClientWebSocket) {
+              memberClientWebSocket.send(JSON.stringify({command: "join", clientId: clientId}));
             }
+            clientWebSocket.send(JSON.stringify({command: "join", clientId: member}));
+          });
         }
-        clientWebSockets.delete(clientId);
-        omeWebSockets.forEach((omeWebSocket) => {
-            omeWebSocket.close();
-        });
+        const roomSet = groupMembers.get(groupName);
+        if (roomSet) {
+          roomSet.add(clientId);
+        } else {
+          groupMembers.set(groupName, new Set<string>([clientId]));
+        }
+        break;
+      }
+      case "answer":
+      case "candidate": {
+        const omeWebSocket = omeWebSockets.get(omeMessageFromClient.id as string);
+        log(`send message to OME server: ${JSON.stringify(omeMessageFromClient)}`);
+        omeWebSocket?.ws.send(JSON.stringify(omeMessageFromClient));
+        break;
+      }
+    }
+  }
 
-        log("closed connection to client");
+  ws.onclose = () => {
+    clientWebSockets.delete(clientId);
+    log("closed connection to client");
+  };
+};
+
+
+const useHttps = Deno.env.get("USE_HTTPS") === "true";
+
+if (useHttps) {
+  serveTls((req) => {
+      if (req.headers.get("upgrade") !== "websocket") {
+        return new Response("not found", {status: 404});
+      }
+      const {socket, response} = Deno.upgradeWebSocket(req);
+      handleWebSocket(socket);
+      return response;
+    },
+    {
+      port: 3000,
+      certFile: "/work/keys/fullchain.pem",
+      keyFile: "/work/keys/privkey.pem",
     });
-});
-
-const port = process.env.PORT || 3000;
-server.listen(port, () => {
-    log(`Server is running on port ${port}`);
-});
+  console.log(`Server is running on wss://localhost:${port}`);
+} else {
+  serve(
+    (req) => {
+      if (req.headers.get("upgrade") !== "websocket") {
+        return new Response("not found", {status: 404});
+      }
+      const {socket, response} = Deno.upgradeWebSocket(req);
+      handleWebSocket(socket);
+      return response;
+    },
+    {port: port},
+  );
+  console.log(`Server is running on ws://localhost:${port}`);
+}

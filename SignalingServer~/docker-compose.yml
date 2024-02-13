@@ -2,20 +2,26 @@ version: '3.8'
 
 services:
     sigapp:
-        build: .
+        image: denoland/deno:alpine-1.39.4
         container_name: sigapp
         init: true
         restart: always
         tty: true
-        env_file: ./.env
         network_mode: "host"
         ports:
             - "3000:3000"
+        environment:
+            USE_HTTPS: ${USE_HTTPS:-false}
+            APP_PORT: ${APP_PORT:-3000}
+            OME_SERVER_URL: ${OME_SERVER_URL:-ws://localhost:3333}
+            LOGGING: ${LOGGING:-on}
+            MESSAGING_CORS_ORIGIN: ${MESSAGING_CORS_ORIGIN:-*}
+        working_dir: /src
         volumes:
-            - .:/app
+            - .:/src
             #- ./keys/fullchain.pem:/work/keys/fullchain.pem:ro
             #- ./keys/privkey.pem:/work/keys/privkey.pem:ro
         expose:
             - ${APP_PORT:-3000}
-
+        entrypoint: ["deno", "run", "--allow-env", "--allow-net","--allow-read","./src/index.ts"]
 
