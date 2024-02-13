@@ -19,8 +19,8 @@ namespace Extreal.Integration.SFU.OME
         private readonly string serverUrl;
         private readonly List<RTCIceServer> defaultIceServers;
 
-        private readonly List<Action<string, OmeRTCPeerConnection>> publishPcCreateHooks = new List<Action<string, OmeRTCPeerConnection>>();
-        private readonly List<Action<string, OmeRTCPeerConnection>> subscribePcCreateHooks = new List<Action<string, OmeRTCPeerConnection>>();
+        private readonly List<Action<string, RTCPeerConnection>> publishPcCreateHooks = new List<Action<string, RTCPeerConnection>>();
+        private readonly List<Action<string, RTCPeerConnection>> subscribePcCreateHooks = new List<Action<string, RTCPeerConnection>>();
         private readonly List<Action<string>> publishPcCloseHooks = new List<Action<string>>();
         private readonly List<Action<string>> subscribePcCloseHooks = new List<Action<string>>();
 
@@ -101,14 +101,14 @@ namespace Extreal.Integration.SFU.OME
         /// Add a process to be called when creating a publish peer connection.
         /// </summary>
         /// <param name="hook"></param>
-        public void AddPublishPcCreateHook(Action<string, OmeRTCPeerConnection> hook)
+        public void AddPublishPcCreateHook(Action<string, RTCPeerConnection> hook)
             => publishPcCreateHooks.Add(hook);
 
         /// <summary>
         /// Add a process to be called when creating a subscribe peer connection.
         /// </summary>
         /// <param name="hook"></param>
-        public void AddSubscribePcCreateHook(Action<string, OmeRTCPeerConnection> hook)
+        public void AddSubscribePcCreateHook(Action<string, RTCPeerConnection> hook)
             => subscribePcCreateHooks.Add(hook);
 
         /// <summary>

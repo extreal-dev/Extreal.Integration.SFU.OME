@@ -34,8 +34,8 @@ namespace Extreal.Integration.SFU.OME
         private readonly List<RTCIceServer> defaultIceServers;
         private string localClientId;
 
-        private readonly List<Action<string, OmeRTCPeerConnection>> publishPcCreateHooks = new List<Action<string, OmeRTCPeerConnection>>();
-        private readonly List<Action<string, OmeRTCPeerConnection>> subscribePcCreateHooks = new List<Action<string, OmeRTCPeerConnection>>();
+        private readonly List<Action<string, RTCPeerConnection>> publishPcCreateHooks = new List<Action<string, RTCPeerConnection>>();
+        private readonly List<Action<string, RTCPeerConnection>> subscribePcCreateHooks = new List<Action<string, RTCPeerConnection>>();
         private readonly List<Action<string>> publishPcCloseHooks = new List<Action<string>>();
         private readonly List<Action<string>> subscribePcCloseHooks = new List<Action<string>>();
 
@@ -402,10 +402,10 @@ namespace Extreal.Integration.SFU.OME
             onUserLeft.OnNext(message.ClientId);
         }
 
-        public void AddPublishPcCreateHook(List<Action<string, OmeRTCPeerConnection>> hooks)
+        public void AddPublishPcCreateHook(List<Action<string, RTCPeerConnection>> hooks)
             => publishPcCreateHooks.AddRange(hooks);
 
-        public void AddSubscribePcCreateHook(List<Action<string, OmeRTCPeerConnection>> hooks)
+        public void AddSubscribePcCreateHook(List<Action<string, RTCPeerConnection>> hooks)
             => subscribePcCreateHooks.AddRange(hooks);
 
         public void AddPublishPcCloseHook(List<Action<string>> hooks)
