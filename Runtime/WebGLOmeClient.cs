@@ -37,7 +37,7 @@ namespace Extreal.Integration.SFU.OME
         }
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void HandleOnJoined(string streamName, string unused) => instance.FireOnJoined(streamName);
+        private static void HandleOnJoined(string clientId, string unused) => instance.FireOnJoined(clientId);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void HandleOnLeft(string unused1, string unused2) => instance.FireOnLeft();
@@ -46,10 +46,10 @@ namespace Extreal.Integration.SFU.OME
         private static void HandleOnUnexpectedLeft(string reason, string unused) => instance.FireOnUnexpectedLeft(reason);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void HandleOnUserJoined(string streamName, string unused) => instance.FireOnUserJoined(streamName);
+        private static void HandleOnUserJoined(string clientId, string unused) => instance.FireOnUserJoined(clientId);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
-        private static void HandleOnUserLeft(string streamName, string unused) => instance.FireOnUserLeft(streamName);
+        private static void HandleOnUserLeft(string clientId, string unused) => instance.FireOnUserLeft(clientId);
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void ReceiveListHostsResponse(string jsonResponse, string unused)

@@ -9,7 +9,7 @@ class AudioStreamClient {
     private readonly label: string = "sample";
     private readonly isDebug: boolean;
     private readonly getOmeClient: OmeClientProvider;
-    
+
     private inResource: InResource | undefined;
 
     constructor(getOmeClient: OmeClientProvider) {
@@ -21,7 +21,7 @@ class AudioStreamClient {
         this.getOmeClient().addSubscribePcCloseHook(this.closeSubscribePc);
     }
 
-    private createPublishPc = (streamName: string, pc: RTCPeerConnection) => {
+    private createPublishPc = (clientId: string, pc: RTCPeerConnection) => {
         this.inResource = new InResource();
 
         const audioContext = new AudioContext();
@@ -39,17 +39,17 @@ class AudioStreamClient {
         pc.addTrack(this.inResource.inTrack, this.inResource.inStream);
     };
 
-    private createSubscribePc = (streamName: string, pc: RTCPeerConnection) => {
+    private createSubscribePc = (clientId: string, pc: RTCPeerConnection) => {
         pc.addEventListener("track", (event) => {
             if (this.isDebug) {
                 console.log(`OnTrack: Kind=${event.track.kind}`);
             }
         });
     };
-    
-    private closePublishPc = (streamName: string) => this.inResource = undefined;
 
-    private closeSubscribePc = (streamName: string) => {};
+    private closePublishPc = (clientId: string) => (this.inResource = undefined);
+
+    private closeSubscribePc = (clientId: string) => {};
 }
 
 export { AudioStreamClient };

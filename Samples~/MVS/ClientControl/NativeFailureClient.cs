@@ -5,10 +5,10 @@ namespace Extreal.Integration.SFU.OME.MVS.ClientControl
     {
         public static void NativeFailureHook(NativeOmeClient omeClient)
         {
-            omeClient.AddPublishPcCreateHook((streamName, pc) => throw new System.Exception("OmeClient Publish Create Error Test"));
-            omeClient.AddSubscribePcCreateHook((streamName, pc) => throw new System.Exception("OmeClient Subscribe Create Error Test"));
-            omeClient.AddPublishPcCloseHook(streamName => throw new System.Exception("OmeClient Publish Close Error Test"));
-            omeClient.AddSubscribePcCloseHook(streamName => throw new System.Exception("OmeClient Subscribe Close Error Test"));
+            omeClient.AddPublishPcCreateHook((clientId, pc) => throw new System.Exception("OmeClient Publish Create Error Test"));
+            omeClient.AddSubscribePcCreateHook((clientId, pc) => throw new System.Exception("OmeClient Subscribe Create Error Test"));
+            omeClient.AddPublishPcCloseHook(clientId => throw new System.Exception("OmeClient Publish Close Error Test"));
+            omeClient.AddSubscribePcCloseHook(clientId => throw new System.Exception("OmeClient Subscribe Close Error Test"));
         }
     }
 }

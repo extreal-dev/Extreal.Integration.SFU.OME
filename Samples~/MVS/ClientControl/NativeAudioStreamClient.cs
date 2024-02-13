@@ -27,7 +27,7 @@ namespace Extreal.Integration.SFU.OME.MVS.ClientControl
             omeClient.AddSubscribePcCloseHook(CloseSubscribePc);
         }
 
-        private void CreatePublishPc(string streamName, OmeRTCPeerConnection pc)
+        private void CreatePublishPc(string clientId, OmeRTCPeerConnection pc)
         {
             inResource.inAudio = new GameObject("InAudio").AddComponent<AudioSource>();
             inResource.inAudio.transform.SetParent(audioSourceContainer);
@@ -40,7 +40,7 @@ namespace Extreal.Integration.SFU.OME.MVS.ClientControl
             pc.AddTrack(inResource.inTrack, inResource.inStream);
         }
 
-        private void CreateSubscribePc(string streamName, OmeRTCPeerConnection pc) =>
+        private void CreateSubscribePc(string clientId, OmeRTCPeerConnection pc) =>
             pc.OnTrack = (RTCTrackEvent e) =>
                 {
                     if (Logger.IsDebug())
@@ -49,7 +49,7 @@ namespace Extreal.Integration.SFU.OME.MVS.ClientControl
                     }
                 };
 
-        private void ClosePublishPc(string streamName)
+        private void ClosePublishPc(string clientId)
         {
             if (inResource.inAudio != null)
             {
@@ -68,7 +68,7 @@ namespace Extreal.Integration.SFU.OME.MVS.ClientControl
             inResource = (default, default, default);
         }
 
-        private void CloseSubscribePc(string streamName)
+        private void CloseSubscribePc(string clientId)
         {
         }
 

@@ -13,11 +13,11 @@ class OmeAdapter {
                 console.log(voiceChatConfig);
             }
             this.omeClient = new OmeClient(voiceChatConfig, {
-                onJoined: (streamName) => callback(this.withPrefix("HandleOnJoined"), streamName),
+                onJoined: (clientId) => callback(this.withPrefix("HandleOnJoined"), clientId),
                 onLeft: () => callback(this.withPrefix("HandleOnLeft")),
                 onUnexpectedLeft: (reason) => callback(this.withPrefix("HandleOnUnexpectedLeft"), reason),
-                onUserJoined: (streamName) => callback(this.withPrefix("HandleOnUserJoined"), streamName),
-                onUserLeft: (streamName) => callback(this.withPrefix("HandleOnUserLeft"), streamName),
+                onUserJoined: (clientId) => callback(this.withPrefix("HandleOnUserJoined"), clientId),
+                onUserLeft: (clientId) => callback(this.withPrefix("HandleOnUserLeft"), clientId),
                 handleGroupList: (groupListResponse) =>
                     callback(this.withPrefix("ReceiveListHostsResponse"), JSON.stringify(groupListResponse)),
             });
