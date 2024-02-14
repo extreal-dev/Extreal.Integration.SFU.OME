@@ -103,7 +103,7 @@ class OmeWebSocket extends WebSocket {
             for (const hook of this.publishPcCloseHooks) {
                 this.handleHook(hook, this.localClientId, this.publishConnection as OmeRTCPeerConnection);
             }
-            this.close();
+            this.publishConnection.close();
             this.publishConnection = null;
             this.localClientId = "";
         }

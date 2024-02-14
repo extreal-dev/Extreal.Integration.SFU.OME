@@ -34,8 +34,8 @@ namespace Extreal.Integration.SFU.OME
         private readonly List<RTCIceServer> defaultIceServers;
         private string localClientId;
 
-        private readonly List<Action<string, OmeRTCPeerConnection>> publishPcCreateHooks = new List<Action<string, OmeRTCPeerConnection>>();
-        private readonly List<Action<string, OmeRTCPeerConnection>> subscribePcCreateHooks = new List<Action<string, OmeRTCPeerConnection>>();
+        private readonly List<Action<string, RTCPeerConnection>> publishPcCreateHooks = new List<Action<string, RTCPeerConnection>>();
+        private readonly List<Action<string, RTCPeerConnection>> subscribePcCreateHooks = new List<Action<string, RTCPeerConnection>>();
         private readonly List<Action<string>> publishPcCloseHooks = new List<Action<string>>();
         private readonly List<Action<string>> subscribePcCloseHooks = new List<Action<string>>();
 
@@ -87,6 +87,7 @@ namespace Extreal.Integration.SFU.OME
         }
 
         ~OmeWebSocket()
+            // Not covered by testing due to defensive implementation
             => safeDisposer.DisposeByFinalizer();
 
         public void Dispose()
@@ -117,18 +118,8 @@ namespace Extreal.Integration.SFU.OME
             }
         }
 
-        private void SendPublishRequest(string roomName) => UniTask.Void(async () =>
-        {
-            if (State != WebSocketState.Open)
-            {
-                if (Logger.IsDebug())
-                {
-                    Logger.LogDebug("WebSocket is not connected.");
-                }
-                return;
-            }
-            await Send(OmeMessage.CreatePublishRequest(roomName));
-        });
+        private void SendPublishRequest(string roomName)
+            => UniTask.Void(async () => await Send(OmeMessage.CreatePublishRequest(roomName)));
 
         private void OnCloseEvent(WebSocketCloseCode closeCode)
         {
@@ -294,6 +285,7 @@ namespace Extreal.Integration.SFU.OME
                 }
                 else
                 {
+                    // Not covered by testing due to defensive implementation
                     if (Logger.IsError())
                     {
                         Logger.LogError($"Subscribe error: {message.Error}");
@@ -378,6 +370,7 @@ namespace Extreal.Integration.SFU.OME
         {
             if (State != WebSocketState.Open)
             {
+                // Not covered by testing due to defensive implementation
                 if (Logger.IsDebug())
                 {
                     Logger.LogDebug("WebSocket is not connected.");
@@ -409,10 +402,10 @@ namespace Extreal.Integration.SFU.OME
             onUserLeft.OnNext(message.ClientId);
         }
 
-        public void AddPublishPcCreateHook(List<Action<string, OmeRTCPeerConnection>> hooks)
+        public void AddPublishPcCreateHook(List<Action<string, RTCPeerConnection>> hooks)
             => publishPcCreateHooks.AddRange(hooks);
 
-        public void AddSubscribePcCreateHook(List<Action<string, OmeRTCPeerConnection>> hooks)
+        public void AddSubscribePcCreateHook(List<Action<string, RTCPeerConnection>> hooks)
             => subscribePcCreateHooks.AddRange(hooks);
 
         public void AddPublishPcCloseHook(List<Action<string>> hooks)

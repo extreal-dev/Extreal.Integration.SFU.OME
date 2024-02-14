@@ -43,12 +43,6 @@ namespace Extreal.Integration.SFU.OME
             await SetRemoteDescription(ref offerSdp);
             var op = CreateAnswer();
             await op;
-            if (op.IsError)
-            {
-                Logger.LogError($"CreateAnswer failure {op.Error.message}");
-                return;
-            }
-
             var answerSDP = op.Desc;
             await SetLocalDescription(ref answerSDP);
             onCreateAnswerCompletion?.Invoke(answerSDP);

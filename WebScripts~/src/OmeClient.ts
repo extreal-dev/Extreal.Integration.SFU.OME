@@ -1,7 +1,6 @@
 import { waitUntil } from "@extreal-dev/extreal.integration.web.common";
 import { GroupListResponse } from "./OmeMessage";
 import { OmeWebSocket, PcCreateHook, PcCloseHook } from "./OmeWebSocket";
-import { v4 as uuidv4 } from "uuid";
 
 type OmeConfig = {
     serverUrl: string;
@@ -10,11 +9,11 @@ type OmeConfig = {
 };
 
 type OmeClientCallbacks = {
-    onJoined: (streamName: string) => void;
+    onJoined: (clientId: string) => void;
     onLeft: () => void;
     onUnexpectedLeft: (reason: string) => void;
-    onUserJoined: (streamName: string) => void;
-    onUserLeft: (streamName: string) => void;
+    onUserJoined: (clientId: string) => void;
+    onUserLeft: (clientId: string) => void;
     handleGroupList: (groupList: GroupListResponse) => void;
 };
 
@@ -25,8 +24,7 @@ class OmeClient {
     private readonly callbacks;
 
     private socket: OmeWebSocket | null = null;
-    private userName = uuidv4();
-    public localStreamName = "";
+    public localClientId = "";
 
     private publishPcCreateHooks: PcCreateHook[] = [];
     private subscribePcCreateHooks: PcCreateHook[] = [];
@@ -54,17 +52,17 @@ class OmeClient {
         }
 
         this.socket = new OmeWebSocket(this.omeConfig.serverUrl, this.omeConfig.iceServers, this.isDebug, {
-            onJoined: (streamName) => {
-                this.callbacks.onJoined(streamName);
-                this.localStreamName = streamName;
+            onJoined: (clientId) => {
+                this.callbacks.onJoined(clientId);
+                this.localClientId = clientId;
             },
             onLeft: () => {
                 this.callbacks.onLeft();
-                this.localStreamName = "";
+                this.localClientId = "";
             },
             onUnexpectedLeft: (reason) => {
                 this.callbacks.onUnexpectedLeft(reason);
-                this.localStreamName = "";
+                this.localClientId = "";
             },
             onUserJoined: this.callbacks.onUserJoined,
             onUserLeft: this.callbacks.onUserLeft,
@@ -92,7 +90,7 @@ class OmeClient {
         if (this.socket === null) {
             return;
         }
-        this.socket.close();
+        this.socket.close(1000);
         this.socket = null;
     };
 
@@ -116,11 +114,11 @@ class OmeClient {
         (await this.getSocket()).listGroups();
     };
 
-    public connect = async (groupName: string) => {
+    public join = async (groupName: string) => {
         (await this.getSocket()).connect(groupName);
     };
 
-    public disconnect = () => {
+    public leave = () => {
         this.stopSocket();
     };
 }

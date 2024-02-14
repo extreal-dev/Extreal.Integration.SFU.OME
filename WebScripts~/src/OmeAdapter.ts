@@ -13,11 +13,11 @@ class OmeAdapter {
                 console.log(voiceChatConfig);
             }
             this.omeClient = new OmeClient(voiceChatConfig, {
-                onJoined: (streamName) => callback(this.withPrefix("HandleOnJoined"), streamName),
+                onJoined: (clientId) => callback(this.withPrefix("HandleOnJoined"), clientId),
                 onLeft: () => callback(this.withPrefix("HandleOnLeft")),
                 onUnexpectedLeft: (reason) => callback(this.withPrefix("HandleOnUnexpectedLeft"), reason),
-                onUserJoined: (streamName) => callback(this.withPrefix("HandleOnUserJoined"), streamName),
-                onUserLeft: (streamName) => callback(this.withPrefix("HandleOnUserLeft"), streamName),
+                onUserJoined: (clientId) => callback(this.withPrefix("HandleOnUserJoined"), clientId),
+                onUserLeft: (clientId) => callback(this.withPrefix("HandleOnUserLeft"), clientId),
                 handleGroupList: (groupListResponse) =>
                     callback(this.withPrefix("ReceiveListHostsResponse"), JSON.stringify(groupListResponse)),
             });
@@ -25,8 +25,8 @@ class OmeAdapter {
 
         addAction(this.withPrefix("DoReleaseManagedResources"), () => this.getOmeClient().releaseManagedResources());
         addAction(this.withPrefix("DoListGroupsAsync"), () => this.getOmeClient().listGroups());
-        addAction(this.withPrefix("DoConnectAsync"), (groupName) => this.getOmeClient().connect(groupName));
-        addAction(this.withPrefix("DisconnectAsync"), () => this.getOmeClient().disconnect());
+        addAction(this.withPrefix("DoJoinAsync"), (groupName) => this.getOmeClient().join(groupName));
+        addAction(this.withPrefix("LeaveAsync"), () => this.getOmeClient().leave());
     };
 
     private withPrefix = (name: string) => `WebGLOmeClient#${name}`;
