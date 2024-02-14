@@ -124,8 +124,6 @@ if (useHttps) {
   const key = Deno.readTextFileSync('/work/keys/privkey.pem')
   Deno.serve({
       port: 3000,
-      cert: "/work/keys/fullchain.pem",
-      key: "/work/keys/privkey.pem",
       cert,
       key,
     },
