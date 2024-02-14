@@ -13,7 +13,7 @@ services:
         environment:
             USE_HTTPS: ${USE_HTTPS:-true}
             APP_PORT: ${APP_PORT:-3000}
-            OME_SERVER_URL: ${OME_SERVER_URL:-ws://localhost:3333}
+            OME_SERVER_URL: ${OME_SERVER_URL:-wss://ome-sfu.extreal.net:3334}
             LOGGING: ${LOGGING:-on}
             MESSAGING_CORS_ORIGIN: ${MESSAGING_CORS_ORIGIN:-*}
         working_dir: /src
