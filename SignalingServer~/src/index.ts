@@ -1,5 +1,3 @@
-import {serve, serveTls} from "https://deno.land/std/http/server.ts";
-import {v4} from "https://deno.land/std/uuid/mod.ts";
 import {OmeWebSocket, OmeMessage} from "./OMEWebSocket.ts";
 
 const isLogging = Deno.env.get("LOGGING") === "on";
@@ -122,10 +120,14 @@ const handleWebSocket = (ws: WebSocket) => {
 const useHttps = Deno.env.get("USE_HTTPS") === "true";
 
 if (useHttps) {
+  const cert = Deno.readTextFileSync('/work/keys/fullchain.pem')
+  const key = Deno.readTextFileSync('/work/keys/privkey.pem')
   Deno.serve({
       port: 3000,
       cert: "/work/keys/fullchain.pem",
       key: "/work/keys/privkey.pem",
+      cert,
+      key,
     },
     (req) => {
       if (req.headers.get("upgrade") !== "websocket") {
