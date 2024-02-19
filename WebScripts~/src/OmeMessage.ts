@@ -41,7 +41,7 @@ class OmeMessage {
         sendMessage.id = id;
         sendMessage.sdp = rtcSessionDescription;
         sendMessage.candidates = [];
-        return sendMessage.toString();
+        return OmeMessage.convertToBuffer(sendMessage);
     };
 
     public static createJoinMessage = (id: number | undefined) => {
@@ -49,7 +49,7 @@ class OmeMessage {
         const sendMessage = new OmeMessage();
         sendMessage.command = commandName;
         sendMessage.id = id;
-        return sendMessage.toString();
+        return OmeMessage.convertToBuffer(sendMessage);
     };
 
     public static createIceCandidate = (id: number | undefined, rtcIceCandidate: RTCIceCandidateInit) => {
@@ -58,27 +58,32 @@ class OmeMessage {
         sendMessage.command = commandName;
         sendMessage.id = id;
         sendMessage.candidates = [rtcIceCandidate];
-        return sendMessage.toString();
+        return OmeMessage.convertToBuffer(sendMessage);
     };
 
     public static createListGroupsRequest = () => {
         const message = new OmeMessage();
         message.command = "list groups";
-        return message.toString();
+        return OmeMessage.convertToBuffer(message);
     };
 
     public static createPublishOffer = (groupName: string) => {
         const message = new OmeMessage();
         message.command = "publish";
         message.groupName = groupName;
-        return message.toString();
+        return OmeMessage.convertToBuffer(message);
     };
 
     public static createSubscribeOffer = (clientId: string) => {
         const message = new OmeMessage();
         message.command = "subscribe";
         message.clientId = clientId;
-        return message.toString();
+        return OmeMessage.convertToBuffer(message);
+    };
+
+    private static convertToBuffer = (message: OmeMessage)  => {
+      const encoder = new TextEncoder();
+      return encoder.encode(JSON.stringify(message));
     };
 }
 
