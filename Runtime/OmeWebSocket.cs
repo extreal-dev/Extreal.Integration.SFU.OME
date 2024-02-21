@@ -259,7 +259,7 @@ namespace Extreal.Integration.SFU.OME
 
         private void ReceiveSubscribeOffer(OmeMessage message)
         {
-            var currentRetryCount = subscribeRetryCounts.ContainsKey(message.ClientId) ? subscribeRetryCounts[message.ClientId] : 0;
+            var currentRetryCount = subscribeRetryCounts.TryGetValue(message.ClientId, out var count) ? count : 0;
 
             if (!string.IsNullOrEmpty(message.Error))
             {
