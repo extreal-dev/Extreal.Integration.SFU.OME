@@ -20,7 +20,7 @@ namespace Extreal.Integration.SFU.OME
         /// <summary>
         /// Creates a new OME configuration.
         /// </summary>
-        /// <param name="url">URL of the signaling server</param>
+        /// <param name="serverUrl">URL of the signaling server</param>
         /// <param name="iceServerConfigs">Ice server configurations</param>
         public OmeConfig(string serverUrl, List<IceServerConfig> iceServerConfigs = default)
         {
