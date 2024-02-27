@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- If you want to use TLS/SSL, uncomment the commented lines -->
 <Server version="8">
 	<Name>OvenMediaEngine</Name>
 	<Type>origin</Type>
@@ -12,7 +11,6 @@
 				<Signalling>
 					<Port>${env:OME_SIGNALLING_PORT:3333}</Port>
 					<WorkerCount>1</WorkerCount>
-					<!-- <TLSPort>${env:OME_SIGNALLING_TLS_PORT:3334}</TLSPort> -->
 				</Signalling>
 				<IceCandidates>
 					<TcpRelay>${env:OME_TCP_RELAY_ADDRESS:*:3478}</TcpRelay>
@@ -28,7 +26,6 @@
 				<Signalling>
 					<Port>${env:OME_SIGNALLING_PORT:3333}</Port>
 					<WorkerCount>1</WorkerCount>
-					<!-- <TLSPort>${env:OME_SIGNALLING_TLS_PORT:3334}</TLSPort> -->
 				</Signalling>
 				<IceCandidates>
 					<TcpRelay>${env:OME_TCP_RELAY_ADDRESS:*:3478}</TcpRelay>
@@ -44,11 +41,6 @@
 			<Names>
 				<Name>*</Name>
 			</Names>
-			<!-- <TLS>
-				<CertPath>${env:OME_TLS_CERT_PATH:/opt/ovenmediaengine/bin/cert.pem}</CertPath>
-				<KeyPath>${env:OME_TLS_KEY_PATH:/opt/ovenmediaengine/bin/privkey.pem}</KeyPath>
-				<ChainCertPath>${env:OME_TLS_CHAIN_PATH:/opt/ovenmediaengine/bin/chain.pem}</ChainCertPath>
-			</TLS> -->
 		</Host>
 	</Managers>
 
@@ -59,11 +51,6 @@
 				<Names>
 					<Name>*</Name>
 				</Names>
-				<!-- <TLS>
-					<CertPath>${env:OME_TLS_CERT_PATH:/opt/ovenmediaengine/bin/cert.pem}</CertPath>
-					<KeyPath>${env:OME_TLS_KEY_PATH:/opt/ovenmediaengine/bin/privkey.pem}</KeyPath>
-					<ChainCertPath>${env:OME_TLS_CHAIN_PATH:/opt/ovenmediaengine/bin/chain.pem}</ChainCertPath>
-				</TLS> -->
 			</Host>
 			<Applications>
 				<Application>

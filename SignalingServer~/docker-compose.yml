@@ -19,8 +19,6 @@ services:
         working_dir: /src
         volumes:
             - .:/src
-            #- ./keys/fullchain.pem:/work/keys/fullchain.pem:ro
-            #- ./keys/privkey.pem:/work/keys/privkey.pem:ro
         expose:
             - ${APP_PORT:-3000}
         entrypoint: ["deno", "run", "--allow-env", "--allow-net","--allow-read","./src/index.ts"]

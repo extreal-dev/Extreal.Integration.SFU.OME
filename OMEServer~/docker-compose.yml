@@ -1,5 +1,5 @@
 version: "3.7"
-# If you want to use TLS/SSL, uncomment the commented lines
+
 services:
   ome:
     image: airensoft/ovenmediaengine:0.15.3
@@ -7,12 +7,10 @@ services:
     network_mode: "host"
     ports:
       - ${OME_SIGNALLING_PORT:-3333}:${OME_SIGNALLING_PORT:-3333}
-      # - ${OME_SIGNALLING_TLS_PORT:-3334}:${OME_SIGNALLING_TLS_PORT:-3334}
       - ${OME_TCP_RELAY_PORT:-3478}:${OME_TCP_RELAY_PORT:-3478}
       - ${OME_ICE_CANDIDATES_PORT:-10006}:${OME_ICE_CANDIDATES_PORT:-10006}/udp
     environment:
       - OME_SIGNALLING_PORT=${OME_SIGNALLING_PORT}
-      # - OME_SIGNALLING_TLS_PORT=${OME_SIGNALLING_TLS_PORT}
       - OME_TCP_RELAY_ADDRESS=${OME_TCP_RELAY_ADDRESS}
       - OME_ICE_CANDIDATES=${OME_ICE_CANDIDATES}
       - OME_WEBRTC_RTX=${OME_WEBRTC_RTX:-false}
@@ -20,9 +18,6 @@ services:
       - OME_WEBRTC_JITTER_BUFFER=${OME_WEBRTC_JITTER_BUFFER:-false}
     volumes:
       - ${OME_SERVER_CONF}:/opt/ovenmediaengine/bin/origin_conf/Server.xml:ro
-      # - ${SSL_SERVER_CERT}:${OME_TLS_CERT_PATH}:ro
-      # - ${SSL_SERVER_KEY}:${OME_TLS_KEY_PATH}:ro
-      # - ${SSL_SERVER_CHAIN}:${OME_TLS_CHAIN_PATH}:ro
     command: /opt/ovenmediaengine/bin/OvenMediaEngine -c origin_conf
     restart: always
     logging:
