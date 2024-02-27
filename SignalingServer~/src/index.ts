@@ -1,7 +1,7 @@
 import {OmeWebSocket, OmeMessage} from "./OMEWebSocket.ts";
 
 const isLogging = Deno.env.get("LOGGING") === "on";
-const log = (message: string) => isLogging && console.log(message);
+const log = (logMessage: () => string | object) => isLogging && console.log(logMessage());
 
 const omeServerUrl = Deno.env.get("OME_SERVER_URL") || "ws://localhost:3333";
 const groupMembers = new Map<string, Set<string>>();
@@ -23,21 +23,21 @@ const handleWebSocket = (ws: WebSocket) => {
   ws.onmessage = (event) => {
     const dataStr = new TextDecoder().decode(event.data);
     const omeMessageFromClient = JSON.parse(dataStr);
-    log(`received message from client: ${JSON.stringify(omeMessageFromClient)}`);
+    log(() => `received message from client: ${JSON.stringify(omeMessageFromClient)}`);
 
     switch (omeMessageFromClient.command) {
       case "list groups": {
-        log(`groupMembers: ${JSON.stringify(Object.fromEntries(groupMembers))}`);
+        log(() => `groupMembers: ${JSON.stringify(Object.fromEntries(groupMembers))}`);
         omeMessageFromClient.groupListResponse = {
           groups: [...groupMembers].map((entry) => ({name: entry[0]})),
         };
-        log(`list groups: ${JSON.stringify(omeMessageFromClient.groupListResponse)}`);
+        log(() => `list groups: ${JSON.stringify(omeMessageFromClient.groupListResponse)}`);
         clientWebSocket.send(JSON.stringify(omeMessageFromClient));
         break;
       }
       case "publish": {
         groupName = omeMessageFromClient.groupName as string;
-        log(`publish: groupName=${groupName}, clientId: ${clientId}`);
+        log(() => `publish: groupName=${groupName}, clientId: ${clientId}`);
         const publishWebSocket = new OmeWebSocket(`${omeServerUrl}/app/${clientId}?direction=send`, isLogging);
         publishWebSocket.onMessageCallback = (omeMessageFromOme: OmeMessage) => {
           omeMessageFromOme.command = "publish offer";
@@ -52,14 +52,14 @@ const handleWebSocket = (ws: WebSocket) => {
         break;
       }
       case "subscribe": {
-        log(`subscribe: clientId=${omeMessageFromClient.clientId}`);
+        log(() => `subscribe: clientId=${omeMessageFromClient.clientId}`);
         const subscribeWebSocket = new OmeWebSocket(
           `${omeServerUrl}/app/${omeMessageFromClient.clientId}`,
           isLogging,
         );
         subscribeWebSocket.onMessageCallback = (omeMessageFromOme: OmeMessage) => {
           log(
-            `received message from OME server: id=${omeMessageFromOme.id}, clientId=${omeMessageFromOme.command}`,
+            () => `received message from OME server: id=${omeMessageFromOme.id}, clientId=${omeMessageFromOme.command}`,
           );
           omeMessageFromOme.command = "subscribe offer";
           omeMessageFromOme.clientId = omeMessageFromClient.clientId;
@@ -103,7 +103,7 @@ const handleWebSocket = (ws: WebSocket) => {
       case "answer":
       case "candidate": {
         const omeWebSocket = omeWebSockets.get(omeMessageFromClient.id as string);
-        log(`send message to OME server: ${JSON.stringify(omeMessageFromClient)}`);
+        log(() => `send message to OME server: ${JSON.stringify(omeMessageFromClient)}`);
         omeWebSocket?.ws.send(JSON.stringify(omeMessageFromClient));
         break;
       }
@@ -138,10 +138,10 @@ const handleWebSocket = (ws: WebSocket) => {
         omeWebSocket.ws.close();
     });
 
-    log("closed connection to client");
+    log(() => "closed connection to client");
 
     clientWebSockets.delete(clientId);
-    log("closed connection to client");
+    log(() => "closed connection to client");
   };
 };
 
