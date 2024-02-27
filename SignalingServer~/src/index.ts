@@ -10,11 +10,9 @@ const port = Number(Deno.env.get("PORT")) || 3000;
 
 const handleWebSocket = (ws: WebSocket) => {
   let groupName = "";
-  let clientId = "";
+  const clientId = crypto.randomUUID();
   const clientWebSocket = ws;
   const omeWebSockets = new Map<string, OmeWebSocket>();
-
-  clientId = crypto.randomUUID();
 
   ws.onopen = () => {
     clientWebSockets.set(clientId, clientWebSocket);
