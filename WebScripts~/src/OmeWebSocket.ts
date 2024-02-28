@@ -155,10 +155,8 @@ class OmeWebSocket extends WebSocket {
         });
         pc.setIceCandidateCallback((candidate) => {
             if (!isSetLocalCandidate) {
-                // const sdpMid = candidate.sdpMid;
                 if (command.candidates) {
                     for (const candidateInit of command.candidates) {
-                        // candidateInit.sdpMid = sdpMid;
                         pc.addIceCandidate(candidateInit);
                     }
                 }
