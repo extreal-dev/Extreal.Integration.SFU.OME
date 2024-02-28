@@ -1,5 +1,5 @@
 # Signaling server
-Prepare a Signaling server. Start a messaging server using Docker
+Prepare a Signaling server. Start a Signaling server using Docker
 Compose.
 
 ```bash

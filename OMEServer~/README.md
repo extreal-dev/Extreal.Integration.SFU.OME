@@ -1,5 +1,5 @@
 # OvenMediaEngine(OME) server
-Prepare a OME server. Start a messaging server using Docker
+Prepare a OME server. Start a OME server using Docker
 Compose.
 
 ```bash
