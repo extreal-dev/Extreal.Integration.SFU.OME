@@ -6,7 +6,7 @@ services:
     container_name: ome_server
     network_mode: "host"
     ports:
-      - ${OME_SIGNALLING_PORT:-3333}:${OME_SIGNALLING_PORT:-3333}
+      - ${OME_SIGNALLING_PORT:-3041}:${OME_SIGNALLING_PORT:-3041}
       - ${OME_TCP_RELAY_PORT:-3478}:${OME_TCP_RELAY_PORT:-3478}
       - ${OME_ICE_CANDIDATES_PORT:-10006}:${OME_ICE_CANDIDATES_PORT:-10006}/udp
     environment:

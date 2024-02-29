@@ -9,7 +9,7 @@ namespace Extreal.Integration.SFU.OME.MVS.ClientControl
         protected override void Configure(IContainerBuilder builder)
         {
             var omeConfig = new OmeConfig(
-                "ws://localhost:3000",
+                "ws://localhost:3040",
                 new List<IceServerConfig>
                 {
                     new IceServerConfig(new List<string>

@@ -3,10 +3,10 @@ import {OmeWebSocket, OmeMessage} from "./OMEWebSocket.ts";
 const isLogging = Deno.env.get("LOGGING") === "on";
 const log = (logMessage: () => string | object) => isLogging && console.log(logMessage());
 
-const omeServerUrl = Deno.env.get("OME_SERVER_URL") || "ws://localhost:3333";
+const omeServerUrl = Deno.env.get("OME_SERVER_URL") || "ws://localhost:3041";
 const groupMembers = new Map<string, Set<string>>();
 const clientWebSockets = new Map<string, WebSocket>();
-const port = Number(Deno.env.get("PORT")) || 3000;
+const port = Number(Deno.env.get("PORT")) || 3040;
 
 const handleWebSocket = (ws: WebSocket) => {
   let groupName = "";
@@ -148,7 +148,7 @@ const useHttps = Deno.env.get("USE_HTTPS") === "true";
 
 const options = useHttps
   ? {
-      port: 3000,
+      port: port,
       cert: Deno.readTextFileSync('/work/keys/fullchain.pem'),
       key: Deno.readTextFileSync('/work/keys/privkey.pem'),
     }

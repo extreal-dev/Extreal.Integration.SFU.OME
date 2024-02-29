@@ -9,7 +9,7 @@
 		<Providers>
 			<WebRTC>
 				<Signalling>
-					<Port>${env:OME_SIGNALLING_PORT:3333}</Port>
+					<Port>${env:OME_SIGNALLING_PORT:3041}</Port>
 					<WorkerCount>1</WorkerCount>
 				</Signalling>
 				<IceCandidates>
@@ -24,7 +24,7 @@
 		<Publishers>
 			<WebRTC>
 				<Signalling>
-					<Port>${env:OME_SIGNALLING_PORT:3333}</Port>
+					<Port>${env:OME_SIGNALLING_PORT:3041}</Port>
 					<WorkerCount>1</WorkerCount>
 				</Signalling>
 				<IceCandidates>
