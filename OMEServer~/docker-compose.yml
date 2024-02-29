@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  ome:
+    image: airensoft/ovenmediaengine:0.15.3
+    container_name: ome_server
+    network_mode: "host"
+    ports:
+      - ${OME_SIGNALLING_PORT:-3041}:${OME_SIGNALLING_PORT:-3041}
+      - ${OME_TCP_RELAY_PORT:-3478}:${OME_TCP_RELAY_PORT:-3478}
+      - ${OME_ICE_CANDIDATES_PORT:-10006}:${OME_ICE_CANDIDATES_PORT:-10006}/udp
+    environment:
+      - OME_SIGNALLING_PORT=${OME_SIGNALLING_PORT}
+      - OME_TCP_RELAY_ADDRESS=${OME_TCP_RELAY_ADDRESS}
+      - OME_ICE_CANDIDATES=${OME_ICE_CANDIDATES}
+      - OME_WEBRTC_RTX=${OME_WEBRTC_RTX:-false}
+      - OME_WEBRTC_ULPFEC=${OME_WEBRTC_ULPFEC:-false}
+      - OME_WEBRTC_JITTER_BUFFER=${OME_WEBRTC_JITTER_BUFFER:-false}
+    volumes:
+      - ${OME_SERVER_CONF}:/opt/ovenmediaengine/bin/origin_conf/Server.xml:ro
+    command: /opt/ovenmediaengine/bin/OvenMediaEngine -c origin_conf
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-file: "1"
+        max-size: 3m

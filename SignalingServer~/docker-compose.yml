@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+    signaling:
+        image: denoland/deno:alpine-1.39.4
+        container_name: ome_signaling
+        init: true
+        restart: always
+        tty: true
+        network_mode: "host"
+        ports:
+            - "3040:3040"
+        environment:
+            USE_HTTPS: ${USE_HTTPS:-false}
+            APP_PORT: ${APP_PORT:-3040}
+            OME_SERVER_URL: ${OME_SERVER_URL:-ws://localhost:3041}
+            LOGGING: ${LOGGING:-on}
+            MESSAGING_CORS_ORIGIN: ${MESSAGING_CORS_ORIGIN:-*}
+        working_dir: /src
+        volumes:
+            - .:/src
+        expose:
+            - ${APP_PORT:-3040}
+        entrypoint: ["deno", "run", "--allow-env", "--allow-net","--allow-read","./src/index.ts"]
+

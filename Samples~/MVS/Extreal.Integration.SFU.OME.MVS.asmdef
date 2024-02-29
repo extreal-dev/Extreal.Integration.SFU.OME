@@ -1,0 +1,25 @@
+{
+    "name": "Extreal.Integration.SFU.OME.MVS",
+    "rootNamespace": "Extreal.Integration.SFU.OME.MVS",
+    "references": [
+        "Unity.TextMeshPro",
+        "Unity.WebRTC",
+        "UniTask",
+        "UniRx",
+        "VContainer",
+        "Extreal.Core.Logging",
+        "Extreal.Core.Common",
+        "Extreal.Core.StageNavigation",
+        "Extreal.Integration.Web.Common",
+        "Extreal.Integration.SFU.OME"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
