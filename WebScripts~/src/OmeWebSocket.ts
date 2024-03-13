@@ -8,6 +8,8 @@ type OmeWebSocketCallbacks = {
     onUnexpectedLeft: (reason: string) => void;
     onUserJoined: (clientId: string) => void;
     onUserLeft: (clientId: string) => void;
+    onJoinRetrying: (count: number) => void;
+    onJoinRetried: (result: boolean) => void;
     handleGroupList: (groupList: GroupListResponse) => void;
 };
 
@@ -30,9 +32,13 @@ class OmeWebSocket extends WebSocket {
     private publishConnection: OmeRTCPeerConnection | null = null;
     private subscribeConnections = new Map<string, OmeRTCPeerConnection>();
 
+    private publishRetryCount = 0;
+    private readonly MaxPublishRetries = 3;
+    private readonly PublishRetryInterval = 5;
+
     private subscribeRetryCounts = new Map<string, number>();
-    private readonly MaxSubscribeRetries = 20;
-    private readonly SubscribeRetryInterval = 0.5;
+    private readonly MaxSubscribeRetries = 10;
+    private readonly SubscribeRetryInterval = 2;
 
     constructor(url: string, defaultIceServers: RTCIceServer[], isDebug: boolean, callbacks: OmeWebSocketCallbacks) {
         super(url);
@@ -93,7 +99,7 @@ class OmeWebSocket extends WebSocket {
 
     private closeAllRTCConnections = () => {
         if (this.isDebug) {
-            console.log(`Left room: groupName=${this.groupName}`);
+            console.log("Lose all RTCConnections");
         }
 
         if (this.publishConnection) {
@@ -146,6 +152,23 @@ class OmeWebSocket extends WebSocket {
 
         const configuration = this.createRTCConfiguration(command.getIceServers());
         const pc = new OmeRTCPeerConnection(configuration, this.isDebug);
+        pc.setFailedCallback(() => {
+            this.closeAllRTCConnections();
+
+            if (this.publishRetryCount < this.MaxPublishRetries) {
+                setTimeout(() => {
+                  this.publishRetryCount++;
+                  this.callbacks.onJoinRetrying(this.publishRetryCount);
+                  this.sendPublishRequest(this.groupName);
+                }, this.PublishRetryInterval * 1000);
+            } else {
+                if (this.isDebug) {
+                    console.error("Maximum publish retryCount reached");
+                }
+                this.publishRetryCount = 0;
+                this.callbacks.onJoinRetried(false);
+            }
+        })
         pc.setCreateAnswerCompletion((answer) => {
             const message = OmeMessage.createAnswerMessage(command.id, answer);
             this.send(message);
@@ -170,6 +193,11 @@ class OmeWebSocket extends WebSocket {
             const message = OmeMessage.createJoinMessage(command.id);
             this.send(message);
             this.callbacks.onJoined(command.getClientId());
+
+            if (this.publishRetryCount > 0) {
+                this.publishRetryCount = 0;
+                this.callbacks.onJoinRetried(true);
+            }
         });
 
         for (const hook of this.publishPcCreateHooks) {
@@ -193,7 +221,7 @@ class OmeWebSocket extends WebSocket {
                     }, this.SubscribeRetryInterval * 1000);
                 } else {
                     if (this.isDebug) {
-                        console.error(`Maximum retryCount reached: ${command.getClientId()}`);
+                        console.error(`Maximum subscribe retryCount reached: ${command.getClientId()}`);
                     }
                     this.subscribeRetryCounts.delete(command.getClientId());
                 }

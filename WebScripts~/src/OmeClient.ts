@@ -14,6 +14,8 @@ type OmeClientCallbacks = {
     onUnexpectedLeft: (reason: string) => void;
     onUserJoined: (clientId: string) => void;
     onUserLeft: (clientId: string) => void;
+    onJoinRetrying: (count: number) => void;
+    onJoinRetried: (result: boolean) => void;
     handleGroupList: (groupList: GroupListResponse) => void;
 };
 
@@ -66,6 +68,8 @@ class OmeClient {
             },
             onUserJoined: this.callbacks.onUserJoined,
             onUserLeft: this.callbacks.onUserLeft,
+            onJoinRetrying: this.callbacks.onJoinRetrying,
+            onJoinRetried: this.callbacks.onJoinRetried,
             handleGroupList: this.callbacks.handleGroupList,
         });
 

@@ -3,6 +3,7 @@ class OmeRTCPeerConnection extends RTCPeerConnection {
     private onCreateAnswerCompletion: ((sdp: RTCSessionDescriptionInit) => void) | undefined;
     private onIceCandidateCallBack: ((candidate: RTCIceCandidate) => void) | undefined;
     private onConnected: (() => void) | undefined;
+    private onFailed: (() => void) | undefined;
 
     constructor(config: RTCConfiguration, isDebug: boolean) {
         super(config);
@@ -21,6 +22,10 @@ class OmeRTCPeerConnection extends RTCPeerConnection {
 
     public setConnectedCallback = (callback: () => void) => {
         this.onConnected = callback;
+    };
+
+    public setFailedCallback = (callback: () => void) => {
+        this.onFailed = callback;
     };
 
     public createAnswerSdpAsync = async (offerSdp: RTCSessionDescription) => {
@@ -53,6 +58,8 @@ class OmeRTCPeerConnection extends RTCPeerConnection {
 
         if (this.connectionState === "connected" && this.onConnected) {
             this.onConnected();
+        } else if (this.connectionState === "failed" && this.onFailed) {
+            this.onFailed();
         }
     };
 }

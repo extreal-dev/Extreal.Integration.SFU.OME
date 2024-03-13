@@ -18,6 +18,8 @@ class OmeAdapter {
                 onUnexpectedLeft: (reason) => callback(this.withPrefix("HandleOnUnexpectedLeft"), reason),
                 onUserJoined: (clientId) => callback(this.withPrefix("HandleOnUserJoined"), clientId),
                 onUserLeft: (clientId) => callback(this.withPrefix("HandleOnUserLeft"), clientId),
+                onJoinRetrying: (count) => callback(this.withPrefix("HandleOnJoinRetrying"), count.toString()),
+                onJoinRetried: (result) => callback(this.withPrefix("HandleOnJoinRetried"), result.toString()),
                 handleGroupList: (groupListResponse) =>
                     callback(this.withPrefix("ReceiveListHostsResponse"), JSON.stringify(groupListResponse)),
             });
