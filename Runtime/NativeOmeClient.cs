@@ -130,8 +130,8 @@ namespace Extreal.Integration.SFU.OME
             => await (await GetSocketAsync()).ListGroupsAsync();
 
         /// <inheritdoc/>
-        protected override async UniTask DoJoinAsync(string roomName)
-            => (await GetSocketAsync()).Connect(roomName);
+        protected override async UniTask DoJoinAsync(string groupName)
+            => (await GetSocketAsync()).Connect(groupName);
 
         /// <inheritdoc/>
         public override UniTask LeaveAsync()

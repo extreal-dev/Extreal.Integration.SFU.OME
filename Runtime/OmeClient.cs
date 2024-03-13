@@ -149,27 +149,27 @@ namespace Extreal.Integration.SFU.OME
         protected abstract UniTask<GroupListResponse> DoListGroupsAsync();
 
         /// <summary>
-        /// Joins to a room.
+        /// Joins a group.
         /// </summary>
-        /// <param name="roomName">Room name to join to.</param>
-        public UniTask JoinAsync(string roomName)
+        /// <param name="groupName">Group name to join.</param>
+        public UniTask JoinAsync(string groupName)
         {
             if (Logger.IsDebug())
             {
-                Logger.LogDebug($"Join: RoomName={roomName}, ServerUrl={serverUrl}");
+                Logger.LogDebug($"Join: GroupName={groupName}, ServerUrl={serverUrl}");
             }
 
-            return DoJoinAsync(roomName);
+            return DoJoinAsync(groupName);
         }
 
         /// <summary>
-        /// Joins to a room in sub class.
+        /// Joins a group in sub class.
         /// </summary>
-        /// <param name="roomName">Room name to join to.</param>
-        protected abstract UniTask DoJoinAsync(string roomName);
+        /// <param name="groupName">Group name to join to.</param>
+        protected abstract UniTask DoJoinAsync(string groupName);
 
         /// <summary>
-        /// Leaves from joined room.
+        /// Leaves from joined group.
         /// </summary>
         public abstract UniTask LeaveAsync();
     }

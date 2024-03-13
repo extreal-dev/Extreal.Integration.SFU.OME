@@ -30,7 +30,7 @@ namespace Extreal.Integration.SFU.OME
         public IObservable<string> OnUserLeft => onUserLeft;
         private readonly Subject<string> onUserLeft;
 
-        private string roomName;
+        private string groupName;
         private readonly List<RTCIceServer> defaultIceServers;
         private string localClientId;
 
@@ -122,7 +122,7 @@ namespace Extreal.Integration.SFU.OME
             }
         }
 
-        private void SendPublishRequest(string roomName) => UniTask.Void(async () =>
+        private void SendPublishRequest(string groupName) => UniTask.Void(async () =>
         {
             if (State != WebSocketState.Open)
             {
@@ -133,7 +133,7 @@ namespace Extreal.Integration.SFU.OME
                 }
                 return;
             }
-            await Send(OmeMessage.CreatePublishRequest(roomName));
+            await Send(OmeMessage.CreatePublishRequest(groupName));
         });
 
         private void OnCloseEvent(WebSocketCloseCode closeCode)
@@ -241,8 +241,8 @@ namespace Extreal.Integration.SFU.OME
                     UniTask.Void(async () =>
                     {
                         await UniTask.Delay(TimeSpan.FromSeconds(PublishRetryInterval));
-                        SendPublishRequest(roomName);
                         publishRetryCount++;
+                        SendPublishRequest(groupName);
                     });
                 }
                 else
@@ -280,7 +280,7 @@ namespace Extreal.Integration.SFU.OME
             {
                 if (Logger.IsDebug())
                 {
-                    Logger.LogDebug($"Joined Room: roomName={roomName}");
+                    Logger.LogDebug($"Joined Group: groupName={groupName}");
                 }
 
                 publishRetryCount = 0;
@@ -461,10 +461,10 @@ namespace Extreal.Integration.SFU.OME
             return result;
         }
 
-        public void Connect(string roomName)
+        public void Connect(string groupName)
         {
-            this.roomName = roomName;
-            SendPublishRequest(this.roomName);
+            this.groupName = groupName;
+            SendPublishRequest(this.groupName);
         }
     }
 }

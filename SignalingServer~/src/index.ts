@@ -88,9 +88,9 @@ const handleWebSocket = (ws: WebSocket) => {
           });
         }
         clientWebSockets.set(clientId, clientWebSocket);
-        const roomSet = groupMembers.get(groupName);
-        if (roomSet) {
-          roomSet.add(clientId);
+        const groupSet = groupMembers.get(groupName);
+        if (groupSet) {
+          groupSet.add(clientId);
         } else {
           groupMembers.set(groupName, new Set<string>([clientId]));
         }

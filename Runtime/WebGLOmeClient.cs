@@ -72,9 +72,9 @@ namespace Extreal.Integration.SFU.OME
         }
 
 #pragma warning disable CS1998
-        protected override async UniTask DoJoinAsync(string roomName)
+        protected override async UniTask DoJoinAsync(string groupName)
 #pragma warning restore CS1998
-            => WebGLHelper.CallAction(WithPrefix(nameof(DoJoinAsync)), roomName);
+            => WebGLHelper.CallAction(WithPrefix(nameof(DoJoinAsync)), groupName);
 
 #pragma warning disable CS1998
         public override async UniTask LeaveAsync()
