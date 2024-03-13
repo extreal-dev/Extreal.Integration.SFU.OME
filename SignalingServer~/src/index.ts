@@ -10,13 +10,9 @@ const port = Number(Deno.env.get("PORT")) || 3040;
 
 const handleWebSocket = (ws: WebSocket) => {
   let groupName = "";
-  const clientId = crypto.randomUUID();
+  let clientId = "";
   const clientWebSocket = ws;
   const omeWebSockets = new Map<string, OmeWebSocket>();
-
-  ws.onopen = () => {
-    clientWebSockets.set(clientId, clientWebSocket);
-  }
 
   ws.onmessage = (event) => {
     const dataStr = new TextDecoder().decode(event.data);
@@ -35,6 +31,7 @@ const handleWebSocket = (ws: WebSocket) => {
       }
       case "publish": {
         groupName = omeMessageFromClient.groupName as string;
+        clientId = crypto.randomUUID();
         log(() => `publish: groupName=${groupName}, clientId: ${clientId}`);
         const publishWebSocket = new OmeWebSocket(`${omeServerUrl}/app/${clientId}?direction=send`, isLogging);
         publishWebSocket.onMessageCallback = (omeMessageFromOme: OmeMessage) => {
@@ -90,6 +87,7 @@ const handleWebSocket = (ws: WebSocket) => {
             clientWebSocket.send(JSON.stringify({command: "join", clientId: member}));
           });
         }
+        clientWebSockets.set(clientId, clientWebSocket);
         const roomSet = groupMembers.get(groupName);
         if (roomSet) {
           roomSet.add(clientId);

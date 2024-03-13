@@ -42,9 +42,13 @@ namespace Extreal.Integration.SFU.OME
         private OmeRTCPeerConnection publishConnection;
         private readonly Dictionary<string, OmeRTCPeerConnection> subscribeConnections = new Dictionary<string, OmeRTCPeerConnection>();
 
+        private int publishRetryCount;
+        private const int MaxPublishRetries = 3;
+        private const float PublishRetryInterval = 5f;
+
         private readonly Dictionary<string, int> subscribeRetryCounts = new Dictionary<string, int>();
-        private const int MaxSubscribeRetries = 20;
-        private const float SubscribeRetryInterval = 0.5f;
+        private const int MaxSubscribeRetries = 10;
+        private const float SubscribeRetryInterval = 2f;
 
         private GroupListResponse groupList;
 
@@ -118,8 +122,19 @@ namespace Extreal.Integration.SFU.OME
             }
         }
 
-        private void SendPublishRequest(string roomName)
-            => UniTask.Void(async () => await Send(OmeMessage.CreatePublishRequest(roomName)));
+        private void SendPublishRequest(string roomName) => UniTask.Void(async () =>
+        {
+            if (State != WebSocketState.Open)
+            {
+                // Not covered by testing due to defensive implementation
+                if (Logger.IsDebug())
+                {
+                    Logger.LogDebug("WebSocket is not connected.");
+                }
+                return;
+            }
+            await Send(OmeMessage.CreatePublishRequest(roomName));
+        });
 
         private void OnCloseEvent(WebSocketCloseCode closeCode)
         {
@@ -154,7 +169,7 @@ namespace Extreal.Integration.SFU.OME
         {
             if (Logger.IsDebug())
             {
-                Logger.LogDebug($"Left Room: roomName={roomName}");
+                Logger.LogDebug("Close all RTCConnections");
             }
 
             if (publishConnection != null)
@@ -217,6 +232,28 @@ namespace Extreal.Integration.SFU.OME
 
             var configuration = CreateRTCConfiguration(message.GetIceServers());
             var pc = new OmeRTCPeerConnection(ref configuration);
+            pc.SetFailedCallback(() =>
+            {
+                CloseAllRTCConnections();
+
+                if (publishRetryCount < MaxPublishRetries)
+                {
+                    UniTask.Void(async () =>
+                    {
+                        await UniTask.Delay(TimeSpan.FromSeconds(PublishRetryInterval));
+                        SendPublishRequest(roomName);
+                        publishRetryCount++;
+                    });
+                }
+                else
+                {
+                    if (Logger.IsError())
+                    {
+                        Logger.LogError("Maximum publish retryCount reached");
+                    }
+                    publishRetryCount = 0;
+                }
+            });
             pc.SetCreateAnswerCompletion(answer => UniTask.Void(async () =>
             {
                 var messageBytes = OmeMessage.CreateAnswerMessage(message.Id, answer);
@@ -246,6 +283,7 @@ namespace Extreal.Integration.SFU.OME
                     Logger.LogDebug($"Joined Room: roomName={roomName}");
                 }
 
+                publishRetryCount = 0;
                 await Send(OmeMessage.CreateJoinMessage(message.Id));
                 onJoined.OnNext(message.ClientId);
             }));
@@ -278,7 +316,7 @@ namespace Extreal.Integration.SFU.OME
                     {
                         if (Logger.IsError())
                         {
-                            Logger.LogError($"Maximum retryCount reached: {message.ClientId}");
+                            Logger.LogError($"Maximum subscribe retryCount reached: {message.ClientId}");
                         }
                         subscribeRetryCounts.Remove(message.ClientId);
                     }
