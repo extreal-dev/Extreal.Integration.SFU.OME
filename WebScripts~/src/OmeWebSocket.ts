@@ -19,7 +19,6 @@ class OmeWebSocket extends WebSocket {
     private isDebug;
     private callbacks;
 
-    private isConnected = false;
     private groupName = "";
     private localClientId = "";
 
@@ -61,11 +60,10 @@ class OmeWebSocket extends WebSocket {
         if (this.isDebug) {
             console.log("OnOpen");
         }
-        this.isConnected = true;
     };
 
-    private publish = (groupName: string) => {
-        if (!this.isConnected) {
+    private sendPublishRequest = (groupName: string) => {
+        if (this.readyState !== this.OPEN) {
             if (this.isDebug) {
                 console.log("WebSocket is not connected");
             }
@@ -78,7 +76,6 @@ class OmeWebSocket extends WebSocket {
         if (this.isDebug) {
             console.log(`OnClose: reason=${ev.reason}`);
         }
-        this.isConnected = false;
         this.closeAllRTCConnections();
         if (ev.code === 1000) {
             this.callbacks.onLeft();
@@ -134,17 +131,17 @@ class OmeWebSocket extends WebSocket {
         if (command.command === "list groups") {
             this.callbacks.handleGroupList(command.groupListResponse as GroupListResponse);
         } else if (command.command === "publish offer") {
-            this.publishOfferEvent(command);
+            this.receivePublishOffer(command);
         } else if (command.command === "subscribe offer") {
-            this.subscribeOfferEvent(command);
+            this.receiveSubscribeOffer(command);
         } else if (command.command === "join") {
-            this.joinMemberEvent(command);
+            this.receiveJoinMember(command);
         } else if (command.command === "leave") {
-            this.leaveMemberEvent(command);
+            this.receiveLeaveMember(command);
         }
     };
 
-    private publishOfferEvent = async (command: OmeMessage) => {
+    private receivePublishOffer = async (command: OmeMessage) => {
         let isSetLocalCandidate = false;
 
         const configuration = this.createRTCConfiguration(command.getIceServers());
@@ -167,7 +164,7 @@ class OmeWebSocket extends WebSocket {
         });
         pc.setConnectedCallback(() => {
             if (this.isDebug) {
-                console.log(`Joined room: groupName=${this.groupName}`);
+                console.log(`Joined group: groupName=${this.groupName}`);
             }
 
             const message = OmeMessage.createJoinMessage(command.id);
@@ -184,7 +181,7 @@ class OmeWebSocket extends WebSocket {
         pc.createAnswerSdpAsync(command.getSdp());
     };
 
-    private subscribeOfferEvent = (command: OmeMessage) => {
+    private receiveSubscribeOffer = (command: OmeMessage) => {
         const currentRetryCount = this.subscribeRetryCounts.get(command.getClientId()) ?? 0;
 
         if (command.error) {
@@ -274,7 +271,7 @@ class OmeWebSocket extends WebSocket {
     };
 
     private subscribe = (clientId: string) => {
-        if (!this.isConnected) {
+        if (this.readyState !== this.OPEN) {
             if (this.isDebug) {
                 console.log("WebSocket is not connected");
             }
@@ -283,7 +280,7 @@ class OmeWebSocket extends WebSocket {
         this.send(OmeMessage.createSubscribeOffer(clientId));
     };
 
-    private joinMemberEvent = (command: OmeMessage) => {
+    private receiveJoinMember = (command: OmeMessage) => {
         if (this.isDebug) {
             console.log(`User joined: clientId=${command.getClientId()}`);
         }
@@ -292,7 +289,7 @@ class OmeWebSocket extends WebSocket {
         this.callbacks.onUserJoined(command.getClientId());
     };
 
-    private leaveMemberEvent = (command: OmeMessage) => {
+    private receiveLeaveMember = (command: OmeMessage) => {
         if (this.isDebug) {
             console.log(`User left: clientId=${command.getClientId()}`);
         }
@@ -323,7 +320,7 @@ class OmeWebSocket extends WebSocket {
 
     public connect = (groupName: string) => {
         this.groupName = groupName;
-        this.publish(this.groupName);
+        this.sendPublishRequest(this.groupName);
     };
 }
 
