@@ -33,6 +33,8 @@ namespace Extreal.Integration.SFU.OME
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUnexpectedLeft)), HandleOnUnexpectedLeft);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUserJoined)), HandleOnUserJoined);
             WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnUserLeft)), HandleOnUserLeft);
+            WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnJoinRetrying)), HandleOnJoinRetrying);
+            WebGLHelper.AddCallback(WithPrefix(nameof(HandleOnJoinRetried)), HandleOnJoinRetried);
             WebGLHelper.AddCallback(WithPrefix(nameof(ReceiveListHostsResponse)), ReceiveListHostsResponse);
         }
 
@@ -50,6 +52,12 @@ namespace Extreal.Integration.SFU.OME
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void HandleOnUserLeft(string clientId, string unused) => instance.FireOnUserLeft(clientId);
+
+        [MonoPInvokeCallback(typeof(Action<string, string>))]
+        private static void HandleOnJoinRetrying(string count, string unused) => instance.FireOnJoinRetrying(int.Parse(count));
+
+        [MonoPInvokeCallback(typeof(Action<string, string>))]
+        private static void HandleOnJoinRetried(string result, string unused) => instance.FireOnJoinRetried(bool.Parse(result));
 
         [MonoPInvokeCallback(typeof(Action<string, string>))]
         private static void ReceiveListHostsResponse(string jsonResponse, string unused)

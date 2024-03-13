@@ -99,6 +99,40 @@ namespace Extreal.Integration.SFU.OME
             onUserLeft.OnNext(clientId);
         });
 
+        /// <summary>
+        /// <para>Invokes just before retrying.</para>
+        /// Arg: Retry count
+        /// </summary>
+        public IObservable<int> OnJoinRetrying => onJoinRetrying;
+        private readonly Subject<int> onJoinRetrying;
+        protected void FireOnJoinRetrying(int count) => UniTask.Void(async () =>
+        {
+            await UniTask.SwitchToMainThread();
+
+            if (Logger.IsDebug())
+            {
+                Logger.LogDebug($"{nameof(FireOnJoinRetrying)}: count={count}");
+            }
+            onJoinRetrying.OnNext(count);
+        });
+
+        /// <summary>
+        /// <para>Invokes immediately after finishing retrying.</para>
+        /// Arg: Final results of retry. True for success, false for failure.
+        /// </summary>
+        public IObservable<bool> OnJoinRetried => onJoinRetried;
+        private readonly Subject<bool> onJoinRetried;
+        protected void FireOnJoinRetried(bool result) => UniTask.Void(async () =>
+        {
+            await UniTask.SwitchToMainThread();
+
+            if (Logger.IsDebug())
+            {
+                Logger.LogDebug($"{nameof(FireOnJoinRetried)}: result={result}");
+            }
+            onJoinRetried.OnNext(result);
+        });
+
         private readonly string serverUrl;
 
         private readonly CompositeDisposable disposables = new CompositeDisposable();
@@ -118,6 +152,8 @@ namespace Extreal.Integration.SFU.OME
             onUnexpectedLeft = new Subject<string>().AddTo(disposables);
             onUserJoined = new Subject<string>().AddTo(disposables);
             onUserLeft = new Subject<string>().AddTo(disposables);
+            onJoinRetrying = new Subject<int>().AddTo(disposables);
+            onJoinRetried = new Subject<bool>().AddTo(disposables);
         }
 
         /// <inheritdoc/>

@@ -66,6 +66,8 @@ namespace Extreal.Integration.SFU.OME
             websocket.OnUnexpectedLeft.Subscribe(FireOnUnexpectedLeft).AddTo(websocketDisposables);
             websocket.OnUserJoined.Subscribe(FireOnUserJoined).AddTo(websocketDisposables);
             websocket.OnUserLeft.Subscribe(FireOnUserLeft).AddTo(websocketDisposables);
+            websocket.OnJoinRetrying.Subscribe(FireOnJoinRetrying).AddTo(websocketDisposables);
+            websocket.OnJoinRetried.Subscribe(FireOnJoinRetried).AddTo(websocketDisposables);
 
             websocket.AddPublishPcCreateHook(publishPcCreateHooks);
             websocket.AddSubscribePcCreateHook(subscribePcCreateHooks);

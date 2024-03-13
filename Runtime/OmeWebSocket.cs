@@ -30,6 +30,12 @@ namespace Extreal.Integration.SFU.OME
         public IObservable<string> OnUserLeft => onUserLeft;
         private readonly Subject<string> onUserLeft;
 
+        public IObservable<int> OnJoinRetrying => onJoinRetrying;
+        private readonly Subject<int> onJoinRetrying;
+
+        public IObservable<bool> OnJoinRetried => onJoinRetried;
+        private readonly Subject<bool> onJoinRetried;
+
         private string groupName;
         private readonly List<RTCIceServer> defaultIceServers;
         private string localClientId;
@@ -70,6 +76,8 @@ namespace Extreal.Integration.SFU.OME
             onUnexpectedLeft = new Subject<string>().AddTo(disposables);
             onUserJoined = new Subject<string>().AddTo(disposables);
             onUserLeft = new Subject<string>().AddTo(disposables);
+            onJoinRetrying = new Subject<int>().AddTo(disposables);
+            onJoinRetried = new Subject<bool>().AddTo(disposables);
 
             OnOpen += OnOpenEvent;
             OnClose += OnCloseEvent;
@@ -242,6 +250,7 @@ namespace Extreal.Integration.SFU.OME
                     {
                         await UniTask.Delay(TimeSpan.FromSeconds(PublishRetryInterval));
                         publishRetryCount++;
+                        onJoinRetrying.OnNext(publishRetryCount);
                         SendPublishRequest(groupName);
                     });
                 }
@@ -252,6 +261,7 @@ namespace Extreal.Integration.SFU.OME
                         Logger.LogError("Maximum publish retryCount reached");
                     }
                     publishRetryCount = 0;
+                    onJoinRetried.OnNext(false);
                 }
             });
             pc.SetCreateAnswerCompletion(answer => UniTask.Void(async () =>
@@ -283,9 +293,14 @@ namespace Extreal.Integration.SFU.OME
                     Logger.LogDebug($"Joined Group: groupName={groupName}");
                 }
 
-                publishRetryCount = 0;
                 await Send(OmeMessage.CreateJoinMessage(message.Id));
                 onJoined.OnNext(message.ClientId);
+
+                if (publishRetryCount > 0)
+                {
+                    publishRetryCount = 0;
+                    onJoinRetried.OnNext(true);
+                }
             }));
 
             publishPcCreateHooks.ForEach(hook => HandleHook(nameof(ReceivePublishOffer), () => hook.Invoke(message.ClientId, pc)));
