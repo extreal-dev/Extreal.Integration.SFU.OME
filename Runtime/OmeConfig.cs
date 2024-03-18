@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Extreal.Integration.SFU.OME
@@ -18,14 +19,34 @@ namespace Extreal.Integration.SFU.OME
         public List<IceServerConfig> IceServerConfigs { get; }
 
         /// <summary>
+        /// Max join retry count.
+        /// </summary>
+        public int MaxJoinRetryCount { get; }
+
+        /// <summary>
+        /// Join retry intervals.
+        /// </summary>
+        public TimeSpan JoinRetryInterval { get; }
+
+        /// <summary>
         /// Creates a new OME configuration.
         /// </summary>
         /// <param name="serverUrl">URL of the signaling server</param>
         /// <param name="iceServerConfigs">Ice server configurations</param>
-        public OmeConfig(string serverUrl, List<IceServerConfig> iceServerConfigs = default)
+        /// <param name="maxJoinRetryCount">Max join retry count.</param>
+        /// <param name="joinRetryInterval">Join retry intervals.</param>
+        public OmeConfig
+        (
+            string serverUrl,
+            List<IceServerConfig> iceServerConfigs = default,
+            int maxJoinRetryCount = 3,
+            TimeSpan joinRetryInterval = default
+        )
         {
             ServerUrl = serverUrl;
             IceServerConfigs = iceServerConfigs ?? new List<IceServerConfig>();
+            MaxJoinRetryCount = maxJoinRetryCount;
+            JoinRetryInterval = joinRetryInterval == default ? TimeSpan.FromSeconds(5) : joinRetryInterval;
         }
     }
 

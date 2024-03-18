@@ -59,16 +59,11 @@ const handleWebSocket = (ws: WebSocket) => {
           omeMessageFromOme.command = "subscribe offer";
           omeMessageFromOme.clientId = omeMessageFromClient.clientId;
 
-          if (
-            omeMessageFromOme.code &&
-            omeMessageFromOme.code === 404 &&
-            omeMessageFromOme.error === "Cannot create offer"
-          ) {
+          clientWebSocket.send(JSON.stringify(omeMessageFromOme));
+          if (omeMessageFromOme.code && omeMessageFromOme.code >= 400) {
             subscribeWebSocket.ws.close();
-            clientWebSocket.send(JSON.stringify(omeMessageFromOme));
             return;
           }
-          clientWebSocket.send(JSON.stringify(omeMessageFromOme));
           omeWebSockets.set(omeMessageFromOme.id as string, subscribeWebSocket);
         };
         subscribeWebSocket.ws.onopen = () => {

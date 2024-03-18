@@ -33,16 +33,25 @@ class OmeWebSocket extends WebSocket {
     private subscribeConnections = new Map<string, OmeRTCPeerConnection>();
 
     private publishRetryCount = 0;
-    private readonly MaxPublishRetries = 3;
-    private readonly PublishRetryInterval = 5;
+    private maxPublishRetries;
+    private publishRetryInterval;
 
     private subscribeRetryCounts = new Map<string, number>();
-    private readonly MaxSubscribeRetries = 10;
-    private readonly SubscribeRetryInterval = 2;
+    private readonly MaxSubscribeRetries = 5;
+    private readonly SubscribeRetryInterval = 5000;
 
-    constructor(url: string, defaultIceServers: RTCIceServer[], isDebug: boolean, callbacks: OmeWebSocketCallbacks) {
+    constructor(
+        url: string,
+        defaultIceServers: RTCIceServer[],
+        maxJoinRetryCount: number,
+        joinRetryInterval: number,
+        isDebug: boolean,
+        callbacks: OmeWebSocketCallbacks,
+    ) {
         super(url);
         this.defaultIceServers = defaultIceServers;
+        this.maxPublishRetries = maxJoinRetryCount;
+        this.publishRetryInterval = joinRetryInterval;
         this.isDebug = isDebug;
         this.callbacks = callbacks;
 
@@ -155,12 +164,12 @@ class OmeWebSocket extends WebSocket {
         pc.setFailedCallback(() => {
             this.closeAllRTCConnections();
 
-            if (this.publishRetryCount < this.MaxPublishRetries) {
+            if (this.publishRetryCount < this.maxPublishRetries) {
                 setTimeout(() => {
-                  this.publishRetryCount++;
-                  this.callbacks.onJoinRetrying(this.publishRetryCount);
-                  this.sendPublishRequest(this.groupName);
-                }, this.PublishRetryInterval * 1000);
+                    this.publishRetryCount++;
+                    this.callbacks.onJoinRetrying(this.publishRetryCount);
+                    this.sendPublishRequest(this.groupName);
+                }, this.publishRetryInterval);
             } else {
                 if (this.isDebug) {
                     console.error("Maximum publish retryCount reached");
@@ -168,7 +177,7 @@ class OmeWebSocket extends WebSocket {
                 this.publishRetryCount = 0;
                 this.callbacks.onJoinRetried(false);
             }
-        })
+        });
         pc.setCreateAnswerCompletion((answer) => {
             const message = OmeMessage.createAnswerMessage(command.id, answer);
             this.send(message);
@@ -218,7 +227,7 @@ class OmeWebSocket extends WebSocket {
                     setTimeout(() => {
                         this.subscribe(command.getClientId());
                         this.subscribeRetryCounts.set(command.getClientId(), currentRetryCount + 1);
-                    }, this.SubscribeRetryInterval * 1000);
+                    }, this.SubscribeRetryInterval);
                 } else {
                     if (this.isDebug) {
                         console.error(`Maximum subscribe retryCount reached: ${command.getClientId()}`);

@@ -5,6 +5,8 @@ import { OmeWebSocket, PcCreateHook, PcCloseHook } from "./OmeWebSocket";
 type OmeConfig = {
     serverUrl: string;
     iceServers: RTCIceServer[];
+    maxJoinRetryCount: number;
+    joinRetryInterval: number;
     isDebug: boolean;
 };
 
@@ -53,25 +55,32 @@ class OmeClient {
             this.stopSocket();
         }
 
-        this.socket = new OmeWebSocket(this.omeConfig.serverUrl, this.omeConfig.iceServers, this.isDebug, {
-            onJoined: (clientId) => {
-                this.callbacks.onJoined(clientId);
-                this.localClientId = clientId;
+        this.socket = new OmeWebSocket(
+            this.omeConfig.serverUrl,
+            this.omeConfig.iceServers,
+            this.omeConfig.maxJoinRetryCount,
+            this.omeConfig.joinRetryInterval,
+            this.isDebug,
+            {
+                onJoined: (clientId) => {
+                    this.callbacks.onJoined(clientId);
+                    this.localClientId = clientId;
+                },
+                onLeft: () => {
+                    this.callbacks.onLeft();
+                    this.localClientId = "";
+                },
+                onUnexpectedLeft: (reason) => {
+                    this.callbacks.onUnexpectedLeft(reason);
+                    this.localClientId = "";
+                },
+                onUserJoined: this.callbacks.onUserJoined,
+                onUserLeft: this.callbacks.onUserLeft,
+                onJoinRetrying: this.callbacks.onJoinRetrying,
+                onJoinRetried: this.callbacks.onJoinRetried,
+                handleGroupList: this.callbacks.handleGroupList,
             },
-            onLeft: () => {
-                this.callbacks.onLeft();
-                this.localClientId = "";
-            },
-            onUnexpectedLeft: (reason) => {
-                this.callbacks.onUnexpectedLeft(reason);
-                this.localClientId = "";
-            },
-            onUserJoined: this.callbacks.onUserJoined,
-            onUserLeft: this.callbacks.onUserLeft,
-            onJoinRetrying: this.callbacks.onJoinRetrying,
-            onJoinRetried: this.callbacks.onJoinRetried,
-            handleGroupList: this.callbacks.handleGroupList,
-        });
+        );
 
         this.socket.addPublishPcCreateHooks(this.publishPcCreateHooks);
         this.socket.addSubscribePcCreateHooks(this.subscribePcCreateHooks);

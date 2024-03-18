@@ -16,7 +16,7 @@ namespace Extreal.Integration.SFU.OME
     public class NativeOmeClient : OmeClient
     {
         private OmeWebSocket websocket;
-        private readonly string serverUrl;
+        private readonly OmeConfig omeConfig;
         private readonly List<RTCIceServer> defaultIceServers;
 
         private readonly List<Action<string, RTCPeerConnection>> publishPcCreateHooks = new List<Action<string, RTCPeerConnection>>();
@@ -33,7 +33,7 @@ namespace Extreal.Integration.SFU.OME
         /// <returns></returns>
         public NativeOmeClient(OmeConfig omeConfig) : base(omeConfig)
         {
-            serverUrl = omeConfig.ServerUrl;
+            this.omeConfig = omeConfig;
             defaultIceServers = omeConfig.IceServerConfigs.Select(iceServerConfig => new RTCIceServer
             {
                 urls = iceServerConfig.Urls.ToArray(),
@@ -59,7 +59,7 @@ namespace Extreal.Integration.SFU.OME
                 await StopSocketAsync();
             }
 
-            websocket = new OmeWebSocket(serverUrl, defaultIceServers).AddTo(websocketDisposables);
+            websocket = new OmeWebSocket(omeConfig.ServerUrl, defaultIceServers, omeConfig.MaxJoinRetryCount, omeConfig.JoinRetryInterval).AddTo(websocketDisposables);
 
             websocket.OnJoined.Subscribe(FireOnJoined).AddTo(websocketDisposables);
             websocket.OnLeft.Subscribe(_ => FireOnLeft()).AddTo(websocketDisposables);

@@ -97,6 +97,8 @@ namespace Extreal.Integration.SFU.OME
     {
         [SerializeField, SuppressMessage("Usage", "IDE0052"), SuppressMessage("Usage", "CC0052")] private string serverUrl;
         [SerializeField, SuppressMessage("Usage", "IDE0052"), SuppressMessage("Usage", "CC0052")] private JsonRtcIceServer[] iceServers;
+        [SerializeField, SuppressMessage("Usage", "IDE0052"), SuppressMessage("Usage", "CC0052")] private int maxJoinRetryCount;
+        [SerializeField, SuppressMessage("Usage", "IDE0052"), SuppressMessage("Usage", "CC0052")] private long joinRetryInterval;
         [SerializeField, SuppressMessage("Usage", "IDE0052"), SuppressMessage("Usage", "CC0052")] private bool isDebug;
 
         public static string ToJson(WebGLOmeConfig omeConfig)
@@ -107,6 +109,8 @@ namespace Extreal.Integration.SFU.OME
                 iceServers = omeConfig.IceServerConfigs != null
                     ? omeConfig.IceServerConfigs.Select(iceServerConfig => new JsonRtcIceServer(iceServerConfig)).ToArray()
                     : Array.Empty<JsonRtcIceServer>(),
+                maxJoinRetryCount = omeConfig.MaxJoinRetryCount,
+                joinRetryInterval = (long)omeConfig.JoinRetryInterval.TotalMilliseconds,
                 isDebug = omeConfig.IsDebug,
             };
             return JsonUtility.ToJson(jsonOmeConfig);

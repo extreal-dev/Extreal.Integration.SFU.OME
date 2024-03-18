@@ -49,12 +49,12 @@ namespace Extreal.Integration.SFU.OME
         private readonly Dictionary<string, OmeRTCPeerConnection> subscribeConnections = new Dictionary<string, OmeRTCPeerConnection>();
 
         private int publishRetryCount;
-        private const int MaxPublishRetries = 3;
-        private const float PublishRetryInterval = 5f;
+        private readonly int maxPublishRetries;
+        private readonly TimeSpan publishRetryInterval;
 
         private readonly Dictionary<string, int> subscribeRetryCounts = new Dictionary<string, int>();
-        private const int MaxSubscribeRetries = 10;
-        private const float SubscribeRetryInterval = 2f;
+        private const int MaxSubscribeRetries = 5;
+        private readonly TimeSpan subscribeRetryInterval = TimeSpan.FromSeconds(5);
 
         private GroupListResponse groupList;
 
@@ -67,7 +67,7 @@ namespace Extreal.Integration.SFU.OME
         private static readonly ELogger Logger = LoggingManager.GetLogger(nameof(OmeWebSocket));
 
         [SuppressMessage("Usage", "CC0022")]
-        public OmeWebSocket(string url, List<RTCIceServer> defaultIceServers) : base(url)
+        public OmeWebSocket(string url, List<RTCIceServer> defaultIceServers, int maxJoinRetryCount, TimeSpan joinRetryInterval) : base(url)
         {
             safeDisposer = new SafeDisposer(this, ReleaseManagedResources);
 
@@ -85,6 +85,8 @@ namespace Extreal.Integration.SFU.OME
             OnMessage += OnMessageEvent;
 
             this.defaultIceServers = defaultIceServers;
+            maxPublishRetries = maxJoinRetryCount;
+            publishRetryInterval = joinRetryInterval;
 
 #if !UNITY_WEBGL || UNITY_EDITOR
             UniTask.Void(async () =>
@@ -244,11 +246,11 @@ namespace Extreal.Integration.SFU.OME
             {
                 CloseAllRTCConnections();
 
-                if (publishRetryCount < MaxPublishRetries)
+                if (publishRetryCount < maxPublishRetries)
                 {
                     UniTask.Void(async () =>
                     {
-                        await UniTask.Delay(TimeSpan.FromSeconds(PublishRetryInterval));
+                        await UniTask.Delay(publishRetryInterval);
                         publishRetryCount++;
                         onJoinRetrying.OnNext(publishRetryCount);
                         SendPublishRequest(groupName);
@@ -322,7 +324,7 @@ namespace Extreal.Integration.SFU.OME
                     {
                         UniTask.Void(async () =>
                         {
-                            await UniTask.Delay(TimeSpan.FromSeconds(SubscribeRetryInterval));
+                            await UniTask.Delay(subscribeRetryInterval);
                             SendSubscribeRequest(message.ClientId);
                             subscribeRetryCounts[message.ClientId] = currentRetryCount + 1;
                         });
