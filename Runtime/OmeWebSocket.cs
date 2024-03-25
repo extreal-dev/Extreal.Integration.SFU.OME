@@ -322,12 +322,8 @@ namespace Extreal.Integration.SFU.OME
                 {
                     if (currentRetryCount < MaxSubscribeRetries)
                     {
-                        UniTask.Void(async () =>
-                        {
-                            await UniTask.Delay(subscribeRetryInterval);
-                            SendSubscribeRequest(message.ClientId);
-                            subscribeRetryCounts[message.ClientId] = currentRetryCount + 1;
-                        });
+                        SendSubscribeRequest(message.ClientId);
+                        subscribeRetryCounts[message.ClientId] = currentRetryCount + 1;
                     }
                     else
                     {
@@ -423,6 +419,8 @@ namespace Extreal.Integration.SFU.OME
 
         private void SendSubscribeRequest(string clientId) => UniTask.Void(async () =>
         {
+            await UniTask.Delay(subscribeRetryInterval);
+
             if (State != WebSocketState.Open)
             {
                 // Not covered by testing due to defensive implementation
