@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   ome:
-    image: airensoft/ovenmediaengine:0.15.3
+    image: airensoft/ovenmediaengine:0.16.5
     container_name: ome_server
     network_mode: "host"
     ports:
