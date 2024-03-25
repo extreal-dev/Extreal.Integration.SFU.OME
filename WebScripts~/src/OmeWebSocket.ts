@@ -84,7 +84,7 @@ class OmeWebSocket extends WebSocket {
             }
             return;
         }
-        this.send(OmeMessage.createPublishOffer(groupName));
+        this.send(OmeMessage.createPublishRequest(groupName));
     };
 
     private onCloseEvent = (ev: CloseEvent) => {
@@ -161,7 +161,7 @@ class OmeWebSocket extends WebSocket {
 
         const configuration = this.createRTCConfiguration(command.getIceServers());
         const pc = new OmeRTCPeerConnection(configuration, this.isDebug);
-        pc.setFailedCallback(() => {
+        pc.setFailedBeforeConnectCallback(() => {
             this.closeAllRTCConnections();
 
             if (this.publishRetryCount < this.maxPublishRetries) {
@@ -224,10 +224,8 @@ class OmeWebSocket extends WebSocket {
         if (command.error) {
             if (command.error === "Cannot create offer") {
                 if (currentRetryCount < this.MaxSubscribeRetries) {
-                    setTimeout(() => {
-                        this.subscribe(command.getClientId());
-                        this.subscribeRetryCounts.set(command.getClientId(), currentRetryCount + 1);
-                    }, this.SubscribeRetryInterval);
+                    this.sendSubscribeRequest(command.getClientId());
+                    this.subscribeRetryCounts.set(command.getClientId(), currentRetryCount + 1);
                 } else {
                     if (this.isDebug) {
                         console.error(`Maximum subscribe retryCount reached: ${command.getClientId()}`);
@@ -307,14 +305,16 @@ class OmeWebSocket extends WebSocket {
         }
     };
 
-    private subscribe = (clientId: string) => {
-        if (this.readyState !== this.OPEN) {
-            if (this.isDebug) {
-                console.log("WebSocket is not connected");
+    private sendSubscribeRequest = (clientId: string) => {
+        setTimeout(() => {
+            if (this.readyState !== this.OPEN) {
+                if (this.isDebug) {
+                    console.log("WebSocket is not connected");
+                }
+                return;
             }
-            return;
-        }
-        this.send(OmeMessage.createSubscribeOffer(clientId));
+            this.send(OmeMessage.createSubscribeRequest(clientId));
+        }, this.SubscribeRetryInterval);
     };
 
     private receiveJoinMember = (command: OmeMessage) => {
@@ -322,7 +322,7 @@ class OmeWebSocket extends WebSocket {
             console.log(`User joined: clientId=${command.getClientId()}`);
         }
 
-        this.subscribe(command.getClientId());
+        this.sendSubscribeRequest(command.getClientId());
         this.callbacks.onUserJoined(command.getClientId());
     };
 

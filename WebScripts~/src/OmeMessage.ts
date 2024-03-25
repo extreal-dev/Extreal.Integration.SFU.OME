@@ -67,14 +67,14 @@ class OmeMessage {
         return OmeMessage.convertToBuffer(message);
     };
 
-    public static createPublishOffer = (groupName: string) => {
+    public static createPublishRequest = (groupName: string) => {
         const message = new OmeMessage();
         message.command = "publish";
         message.groupName = groupName;
         return OmeMessage.convertToBuffer(message);
     };
 
-    public static createSubscribeOffer = (clientId: string) => {
+    public static createSubscribeRequest = (clientId: string) => {
         const message = new OmeMessage();
         message.command = "subscribe";
         message.clientId = clientId;
