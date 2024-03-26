@@ -242,7 +242,7 @@ namespace Extreal.Integration.SFU.OME
 
             var configuration = CreateRTCConfiguration(message.GetIceServers());
             var pc = new OmeRTCPeerConnection(ref configuration);
-            pc.SetFailedBeforeConnectCallback(() =>
+            pc.SetFailedCallback(() =>
             {
                 CloseAllRTCConnections();
 

@@ -161,7 +161,7 @@ class OmeWebSocket extends WebSocket {
 
         const configuration = this.createRTCConfiguration(command.getIceServers());
         const pc = new OmeRTCPeerConnection(configuration, this.isDebug);
-        pc.setFailedBeforeConnectCallback(() => {
+        pc.setFailedCallback(() => {
             this.closeAllRTCConnections();
 
             if (this.publishRetryCount < this.maxPublishRetries) {

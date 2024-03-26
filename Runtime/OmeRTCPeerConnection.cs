@@ -16,8 +16,8 @@ namespace Extreal.Integration.SFU.OME
         public delegate void DelegateOnConnected();
         private DelegateOnConnected onConnected;
 
-        public delegate void DelegateOnFailedBeforeConnect();
-        private DelegateOnFailedBeforeConnect onFailedBeforeConnect;
+        public delegate void DelegateOnFailed();
+        private DelegateOnFailed onFailed;
 
         private static readonly ELogger Logger = LoggingManager.GetLogger(nameof(OmeRTCPeerConnection));
 
@@ -36,8 +36,8 @@ namespace Extreal.Integration.SFU.OME
         public void SetConnectedCallback(DelegateOnConnected callback)
             => onConnected = callback;
 
-        public void SetFailedBeforeConnectCallback(DelegateOnFailedBeforeConnect callback)
-            => onFailedBeforeConnect = callback;
+        public void SetFailedCallback(DelegateOnFailed callback)
+            => onFailed = callback;
 
         public async UniTask CreateAnswerSdpAsync(RTCSessionDescription offerSdp)
         {
@@ -73,12 +73,11 @@ namespace Extreal.Integration.SFU.OME
 
             if (state == RTCPeerConnectionState.Connected)
             {
-                onFailedBeforeConnect = null;
                 onConnected?.Invoke();
             }
             else if (state == RTCPeerConnectionState.Failed)
             {
-                onFailedBeforeConnect?.Invoke();
+                onFailed?.Invoke();
             }
         }
     }
