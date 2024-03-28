@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Cysharp.Threading.Tasks;
+using Extreal.Core.Logging;
 using NativeWebSocket;
 using UniRx;
 using Unity.WebRTC;
@@ -25,6 +26,7 @@ namespace Extreal.Integration.SFU.OME
         private readonly List<Action<string>> subscribePcCloseHooks = new List<Action<string>>();
 
         private CompositeDisposable websocketDisposables = new CompositeDisposable();
+        private static readonly ELogger Logger = LoggingManager.GetLogger(nameof(NativeOmeClient));
 
         /// <summary>
         /// Creates NativeOmeClient with OmeConfig.
@@ -64,6 +66,7 @@ namespace Extreal.Integration.SFU.OME
             websocket.OnJoined.Subscribe(FireOnJoined).AddTo(websocketDisposables);
             websocket.OnLeft.Subscribe(_ => FireOnLeft()).AddTo(websocketDisposables);
             websocket.OnUnexpectedLeft.Subscribe(FireOnUnexpectedLeft).AddTo(websocketDisposables);
+            websocket.OnUnexpectedSubscribeFailed.Subscribe(FireOnUnexpectedSubscribeFailed).AddTo(websocketDisposables);
             websocket.OnUserJoined.Subscribe(FireOnUserJoined).AddTo(websocketDisposables);
             websocket.OnUserLeft.Subscribe(FireOnUserLeft).AddTo(websocketDisposables);
             websocket.OnJoinRetrying.Subscribe(FireOnJoinRetrying).AddTo(websocketDisposables);
@@ -126,6 +129,19 @@ namespace Extreal.Integration.SFU.OME
         /// <param name="hook"></param>
         public void AddSubscribePcCloseHook(Action<string> hook)
             => subscribePcCloseHooks.Add(hook);
+
+        public void NotifySubscribeFailure(string clientId, string reason)
+        {
+            if (websocket == null)
+            {
+                if (Logger.IsDebug())
+                {
+                    Logger.LogDebug("WebSocket is not open.");
+                }
+                return;
+            }
+            websocket.NotifySubscribeFailure(clientId, reason);
+        }
 
         /// <inheritdoc/>
         protected override async UniTask<GroupListResponse> DoListGroupsAsync()

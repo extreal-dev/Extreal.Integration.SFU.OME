@@ -24,6 +24,9 @@ namespace Extreal.Integration.SFU.OME
         public IObservable<string> OnUnexpectedLeft => onUnexpectedLeft;
         private readonly Subject<string> onUnexpectedLeft;
 
+        public IObservable<string> OnUnexpectedSubscribeFailed => onUnexpectedSubscribeFailed;
+        private readonly Subject<string> onUnexpectedSubscribeFailed;
+
         public IObservable<string> OnUserJoined => onUserJoined;
         private readonly Subject<string> onUserJoined;
 
@@ -74,6 +77,7 @@ namespace Extreal.Integration.SFU.OME
             onJoined = new Subject<string>().AddTo(disposables);
             onLeft = new Subject<Unit>().AddTo(disposables);
             onUnexpectedLeft = new Subject<string>().AddTo(disposables);
+            onUnexpectedSubscribeFailed = new Subject<string>().AddTo(disposables);
             onUserJoined = new Subject<string>().AddTo(disposables);
             onUserLeft = new Subject<string>().AddTo(disposables);
             onJoinRetrying = new Subject<int>().AddTo(disposables);
@@ -432,6 +436,12 @@ namespace Extreal.Integration.SFU.OME
             }
             await Send(OmeMessage.CreateSubscribeRequest(clientId));
         });
+
+        public void NotifySubscribeFailure(string clientId, string reason)
+        {
+            CloseConnection(clientId);
+            onUnexpectedSubscribeFailed.OnNext(reason);
+        }
 
         private void ReceiveJoinMember(OmeMessage message)
         {

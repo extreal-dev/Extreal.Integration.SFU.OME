@@ -66,6 +66,23 @@ namespace Extreal.Integration.SFU.OME
         });
 
         /// <summary>
+        /// <para>Invokes immediately after this client unexpectedly fails subscribe connection.</para>
+        /// Arg: reason why this client fails subscribe connection.
+        /// </summary>
+        public IObservable<string> OnUnexpectedSubscribeFailed => onUnexpectedSubscribeFailed;
+        private readonly Subject<string> onUnexpectedSubscribeFailed;
+        protected void FireOnUnexpectedSubscribeFailed(string reason) => UniTask.Void(async () =>
+        {
+            await UniTask.SwitchToMainThread();
+
+            if (Logger.IsDebug())
+            {
+                Logger.LogDebug($"{nameof(FireOnUnexpectedSubscribeFailed)}: reason={reason}");
+            }
+            onUnexpectedSubscribeFailed.OnNext(reason);
+        });
+
+        /// <summary>
         /// <para>Invokes immediately after a client joined the same group this client joined.</para>
         /// Arg: ID of the joined client.
         /// </summary>
@@ -150,6 +167,7 @@ namespace Extreal.Integration.SFU.OME
             onJoined = new Subject<string>().AddTo(disposables);
             onLeft = new Subject<Unit>().AddTo(disposables);
             onUnexpectedLeft = new Subject<string>().AddTo(disposables);
+            onUnexpectedSubscribeFailed = new Subject<string>().AddTo(disposables);
             onUserJoined = new Subject<string>().AddTo(disposables);
             onUserLeft = new Subject<string>().AddTo(disposables);
             onJoinRetrying = new Subject<int>().AddTo(disposables);
